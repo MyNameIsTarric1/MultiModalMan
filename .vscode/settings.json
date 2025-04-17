@@ -1,0 +1,8 @@
+{
+    // Exclude __pycache__ directories and Python bytecode files
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/*.pyo": true
+    }
+}
