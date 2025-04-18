@@ -7,11 +7,14 @@ from src.components.media_controls import MediaControls
 from src.components.game_panel import GamePanel
 
 def main(page: ft.Page):
+    # Store page in a global variable for thread access
+    ft.page = page
+    
     # Initialize the app layout
     app_layout = AppLayout(page)
     
-    # Initialize game panel
-    game_panel = GamePanel()
+    # Initialize game panel - pass page reference
+    game_panel = GamePanel(page=page)
     
     # Initialize media controls
     media_controls = MediaControls(
