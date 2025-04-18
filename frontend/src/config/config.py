@@ -1,16 +1,16 @@
-from flet import colors, ButtonStyle, TextStyle
+from flet import Colors, ButtonStyle, TextStyle
 
 COLOR_PALETTE = {
-    "primary": colors.BLUE_800,
-    "secondary": colors.GREY_600,
-    "success": colors.GREEN_700,
-    "error": colors.RED_700,
-    "background": colors.WHITE
+    "primary": Colors.BLUE_800,
+    "secondary": Colors.GREY_600,
+    "success": Colors.GREEN_700,
+    "error": Colors.RED_700,
+    "background": Colors.WHITE
 }
 
 BUTTON_STYLE = ButtonStyle(
-    color=colors.WHITE,
-    bgcolor=colors.BLUE_500,
+    color=Colors.WHITE,
+    bgcolor=Colors.BLUE_500,
     padding=20
 )
 
