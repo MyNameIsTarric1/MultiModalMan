@@ -1,0 +1,346 @@
+import flet as ft
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import config
+
+class HangmanVisual(ft.Container):
+    def __init__(self):
+        super().__init__()
+        self.width = 200
+        self.height = 250
+        self.bgcolor = ft.Colors.WHITE
+        self.border = ft.border.all(1, ft.Colors.GREY_400)
+        self.border_radius = ft.border_radius.all(5)
+        self.padding = 10
+        
+        # States of hangman (0-6)
+        self.states = [
+            self._create_state0(),
+            self._create_state1(),
+            self._create_state2(),
+            self._create_state3(),
+            self._create_state4(),
+            self._create_state5(),
+            self._create_state6()
+        ]
+        
+        # Initial empty state
+        self.current_state = 0
+        self.content = self.states[0]
+        
+    def update_state(self, wrong_guesses):
+        """Update the hangman visual based on number of wrong guesses"""
+        # Ensure wrong_guesses is within valid range
+        wrong_guesses = max(0, min(wrong_guesses, 6))
+        self.current_state = wrong_guesses
+        self.content = self.states[wrong_guesses]
+        self.update()
+        
+    def _create_state0(self):
+        # Base only
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            )
+        ])
+        
+    def _create_state1(self):
+        # Base + vertical pole
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            )
+        ])
+        
+    def _create_state2(self):
+        # Base + vertical pole + horizontal beam
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Horizontal beam
+            ft.Container(
+                width=60,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            )
+        ])
+        
+    def _create_state3(self):
+        # Base + vertical pole + horizontal beam + rope
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Horizontal beam
+            ft.Container(
+                width=60,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Rope
+            ft.Container(
+                width=2,
+                height=20,
+                bgcolor=ft.Colors.GREY_700,
+                left=120,
+                top=50
+            )
+        ])
+        
+    def _create_state4(self):
+        # Base + vertical pole + horizontal beam + rope + head
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Horizontal beam
+            ft.Container(
+                width=60,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Rope
+            ft.Container(
+                width=2,
+                height=20,
+                bgcolor=ft.Colors.GREY_700,
+                left=120,
+                top=50
+            ),
+            # Head (circle)
+            ft.Container(
+                width=30,
+                height=30,
+                border=ft.border.all(2, ft.Colors.BLACK),
+                border_radius=15,
+                left=105,
+                top=70
+            )
+        ])
+        
+    def _create_state5(self):
+        # Base + vertical pole + horizontal beam + rope + head + body + arms
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Horizontal beam
+            ft.Container(
+                width=60,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Rope
+            ft.Container(
+                width=2,
+                height=20,
+                bgcolor=ft.Colors.GREY_700,
+                left=120,
+                top=50
+            ),
+            # Head (circle)
+            ft.Container(
+                width=30,
+                height=30,
+                border=ft.border.all(2, ft.Colors.BLACK),
+                border_radius=15,
+                left=105,
+                top=70
+            ),
+            # Body
+            ft.Container(
+                width=2,
+                height=50,
+                bgcolor=ft.Colors.BLACK,
+                left=120,
+                top=100
+            ),
+            # Left arm
+            ft.Container(
+                width=30,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=0.4,
+                left=90,
+                top=110
+            ),
+            # Right arm
+            ft.Container(
+                width=30,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=-0.4,
+                left=122,
+                top=110
+            )
+        ])
+        
+    def _create_state6(self):
+        # Base + vertical pole + horizontal beam + rope + head + body + arms + legs
+        return ft.Stack([
+            # Base horizontal line
+            ft.Container(
+                width=100,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=40,
+                top=200
+            ),
+            # Vertical pole
+            ft.Container(
+                width=4,
+                height=150,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Horizontal beam
+            ft.Container(
+                width=60,
+                height=4,
+                bgcolor=ft.Colors.BROWN,
+                left=60,
+                top=50
+            ),
+            # Rope
+            ft.Container(
+                width=2,
+                height=20,
+                bgcolor=ft.Colors.GREY_700,
+                left=120,
+                top=50
+            ),
+            # Head (circle)
+            ft.Container(
+                width=30,
+                height=30,
+                border=ft.border.all(2, ft.Colors.BLACK),
+                border_radius=15,
+                left=105,
+                top=70
+            ),
+            # Body
+            ft.Container(
+                width=2,
+                height=50,
+                bgcolor=ft.Colors.BLACK,
+                left=120,
+                top=100
+            ),
+            # Left arm
+            ft.Container(
+                width=30,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=0.4,
+                left=90,
+                top=110
+            ),
+            # Right arm
+            ft.Container(
+                width=30,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=-0.4,
+                left=122,
+                top=110
+            ),
+            # Left leg
+            ft.Container(
+                width=40,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=0.7,
+                left=90,
+                top=150
+            ),
+            # Right leg
+            ft.Container(
+                width=40,
+                height=2,
+                bgcolor=ft.Colors.BLACK,
+                rotate=-0.7,
+                left=120,
+                top=150
+            )
+        ])
