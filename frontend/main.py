@@ -7,14 +7,19 @@ from src.components.media_controls import MediaControls
 from src.components.game_panel import GamePanel
 
 def main(page: ft.Page):
+    # Debug print to confirm main is being called
+    print("Main function called")
+    
     # Store page in a global variable for thread access
     ft.page = page
+    print(f"Global page reference set: {page}")
     
     # Initialize the app layout
     app_layout = AppLayout(page)
     
     # Initialize game panel - pass page reference
     game_panel = GamePanel(page=page)
+    print(f"Game panel initialized with page: {page}")
     
     # Initialize media controls
     media_controls = MediaControls(
@@ -30,6 +35,10 @@ def main(page: ft.Page):
         left_panel=game_panel.create_panel(),
         right_panel=media_controls.create_panel()
     )
+    
+    # Update page once all components are initialized
+    page.update()
+    print("Initial page update called")
 
 if __name__ == "__main__":
     ft.app(target=main, view=ft.WEB_BROWSER)
