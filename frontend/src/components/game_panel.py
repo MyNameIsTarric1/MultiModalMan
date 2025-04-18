@@ -5,6 +5,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from src.components.display import GameDisplay
 from src.app.state_manager import GameStateManager
+from src.components.hangman_visual import HangmanVisual
+from src.components.manual_input import ManualInput
 
 class GamePanel:
     def __init__(self, on_reset_callback=None, page=None):
@@ -25,6 +27,12 @@ class GamePanel:
         # Game display components
         self.display = GameDisplay()
         self.display.update(self.state_manager._get_state())
+        
+        # Add hangman visual component
+        self.hangman_visual = HangmanVisual()
+        
+        # Add manual input component
+        self.manual_input = ManualInput(on_guess_callback=self.handle_guess)
         
         # Game control buttons
         self.start_btn = ft.ElevatedButton(
@@ -74,6 +82,16 @@ class GamePanel:
         """Process a letter guess"""
         state = self.state_manager.process_guess(letter)
         self.display.update(state)
+        
+        # Update the hangman visual based on wrong guesses
+        # We can calculate wrong guesses from max attempts and remaining attempts
+        wrong_guesses = self.state_manager.current_game.max_attempts - state.remaining_attempts
+        self.hangman_visual.update_state(wrong_guesses)
+        
+        # Update the page to reflect changes
+        if self.page:
+            self.page.update()
+            
         return state
     
     def start_game(self, e=None):
@@ -174,6 +192,9 @@ class GamePanel:
             self.state_manager.initialize_game()
             self.display.update(self.state_manager._get_state())
             
+            # Reset hangman visual
+            self.hangman_visual.update_state(0)
+            
             # Show confirmation message
             self.show_message("New game started with a random word!")
             
@@ -194,6 +215,9 @@ class GamePanel:
                     # Initialize with custom word
                     self.state_manager.initialize_game(word)
                     self.display.update(self.state_manager._get_state())
+                    
+                    # Reset hangman visual
+                    self.hangman_visual.update_state(0)
                     
                     # Show confirmation message
                     self.show_message(f"New game started with a {len(word)} letter word!")
@@ -279,7 +303,11 @@ class GamePanel:
     def new_game(self, e=None):
         """Reset the current game"""
         self.state_manager.initialize_game()
-        self.display.update(self.state_manager._get_state())
+        state = self.state_manager._get_state()
+        self.display.update(state)
+        
+        # Reset hangman visual
+        self.hangman_visual.update_state(0)
         
         # Show notification using our helper method
         self.show_message("Game reset with a new random word!")
@@ -333,8 +361,19 @@ class GamePanel:
                 
                 ft.Divider(height=20),
                 
-                # Game display
-                self.display
+                # Game display (updated word)
+                self.display,
+                
+                # Add hangman visual in a row with centered alignment
+                ft.Row([
+                    self.hangman_visual
+                ], alignment=ft.MainAxisAlignment.CENTER),
+                
+                ft.Divider(height=20),
+                
+                # Add manual input at the bottom
+                self.manual_input
+                
             ], spacing=15),
             expand=True,
             padding=20
