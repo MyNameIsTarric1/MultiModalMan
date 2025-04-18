@@ -1,4 +1,3 @@
-
 class HangmanGame:
     def __init__(self, secret_word: str, max_attempts: int = 6):
         self.secret_word = secret_word.upper()
