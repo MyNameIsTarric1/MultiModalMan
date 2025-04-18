@@ -7,8 +7,9 @@ class GameState:
     display_word: str
     guessed_letters: set
     remaining_attempts: int
-    game_status: str  # "ongoing", "won", "lost"
+    game_status: str  # "ongoing", "won", "lost", "revealed"
     error_message: Optional[str] = None
+    secret_word: str = ""
 
 class GameStateManager:
     def __init__(self):
@@ -47,7 +48,8 @@ class GameStateManager:
                 guessed_letters=set(),
                 remaining_attempts=0,
                 game_status="lost",
-                error_message=error
+                error_message=error,
+                secret_word=""
             )
             
         return GameState(
@@ -55,5 +57,6 @@ class GameStateManager:
             guessed_letters=self.current_game.guessed_letters.copy(),
             remaining_attempts=self.current_game.remaining_attempts,
             game_status=self.current_game.game_status,
-            error_message=error
+            error_message=error,
+            secret_word=self.current_game.secret_word  # Add the secret word
         )
