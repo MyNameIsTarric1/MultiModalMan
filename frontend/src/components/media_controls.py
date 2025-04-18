@@ -28,7 +28,7 @@ class MediaControls:
             icon=ft.Icons.MIC_OFF,
             on_click=self._stop_voice_recording,
             style=config.BUTTON_STYLE,
-            visible=False
+            visible=True
         )
         
         # Camera control buttons
@@ -45,45 +45,33 @@ class MediaControls:
             icon=ft.Icons.VIDEOCAM_OFF,
             on_click=self._stop_camera_view,
             style=config.BUTTON_STYLE,
-            visible=False
+            visible=True
         )
         
     def _start_voice_recording(self, e):
         self.voice_animation.toggle_recording()
         self.camera_view.stop_camera()  # Stop camera when voice starts
         self.show_notification("Voice recording started")
-        self.voice_start_btn.visible = False
-        self.voice_stop_btn.visible = True
         self.on_guess("A")  # Mock voice input
     
     def _stop_voice_recording(self, e):
         self.voice_animation.stop_recording()
         self.show_notification("Voice recording stopped")
-        self.voice_start_btn.visible = True
-        self.voice_stop_btn.visible = False
     
     def _start_camera_view(self, e):
-        self.camera_view.toggle_camera()
         self.voice_animation.stop_recording()  # Stop voice when camera starts
+        self.camera_view.start_camera()  # Use start_camera directly
         self.show_notification("Camera activated")
-        self.camera_start_btn.visible = False
-        self.camera_stop_btn.visible = True
         self.on_guess("B")  # Mock camera input
     
     def _stop_camera_view(self, e):
         self.camera_view.stop_camera()
         self.show_notification("Camera deactivated")
-        self.camera_start_btn.visible = True
-        self.camera_stop_btn.visible = False
-        
+    
     def reset(self):
         """Reset all media controls"""
         self.voice_animation.stop_recording()
         self.camera_view.stop_camera()
-        self.voice_start_btn.visible = True
-        self.voice_stop_btn.visible = False
-        self.camera_start_btn.visible = True
-        self.camera_stop_btn.visible = False
         
     def create_panel(self):
         """Create the right panel with media controls"""
@@ -95,7 +83,7 @@ class MediaControls:
                 ft.Row([self.voice_start_btn, self.voice_stop_btn], 
                        alignment=ft.MainAxisAlignment.CENTER),
                 
-                ft.Divider(height=20),
+                ft.Divider(height=10),
                 
                 # Camera section
                 ft.Text("Camera Input", style=config.SUBTITLE_STYLE),
