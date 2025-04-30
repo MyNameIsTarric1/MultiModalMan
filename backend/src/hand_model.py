@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+import os
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(base_dir, "models", "letter_recognition.h5")
+
 
 class HandModel:
-    def __init__(self, model_path="/Users/lucian/University/L-impiccato2.0/backend/models/letter_recognition.h5"):
+    def __init__(self, model_path=MODEL_PATH):
         """Initialize the model with the given model path"""
         self.model = load_model(model_path)
         self.mapping = ['0', '1','2','3','4','5','6','7','8','9',

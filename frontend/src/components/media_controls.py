@@ -1,6 +1,7 @@
 import flet as ft
 import sys
 import os
+import speech_recognition as sr
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from src.components.media_display import VoiceAnimation
@@ -73,7 +74,36 @@ class MediaControls:
         self.active_view = "voice"
         self.voice_animation.toggle_recording()
         self.show_notification("Voice recording started")
-        self.on_guess("A")  # Mock voice input
+
+        # Avvia il riconoscimento vocale
+        recognizer = sr.Recognizer()
+        with sr.Microphone() as source:
+            self.show_notification("Listening for a letter...")
+            try:
+                audio = recognizer.listen(source, timeout=5)
+                text = recognizer.recognize_google(audio, language="it-IT").strip().upper()
+                if text.startswith("LETTERA "):
+                    possible_letter = text.replace("LETTERA ", "").strip()
+
+                    if len(possible_letter) == 1 and possible_letter.isalpha():
+                        self.on_guess(possible_letter)
+                        self.show_notification(f"Recognized letter: {possible_letter}")
+                    else:
+                        self.show_notification(f"⚠️ Frase corretta ma lettera non valida: '{possible_letter}'")
+                else:
+                    self.show_notification(f"❌ Per favore di' 'lettera X', ad esempio 'lettera A'")
+                    
+            except sr.UnknownValueError:
+                self.show_notification("Could not understand audio")
+            except sr.RequestError as e:
+                self.show_notification(f"STT service error: {e}")
+            except sr.WaitTimeoutError:
+                self.show_notification("Listening timed out")
+
+        self.voice_animation.stop_recording()
+        self.active_view = None
+
+        self.on_guess(text)
     
     def _stop_voice_recording(self, e):
         if self.active_view == "voice":

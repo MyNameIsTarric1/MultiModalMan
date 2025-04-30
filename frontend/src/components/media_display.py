@@ -45,6 +45,16 @@ class VoiceAnimation(ft.Container):
             size=16,
             weight="bold"
         )
+
+        # Display per la lettera riconosciuta
+        self.letter_display = ft.Text(
+            value="",  # inizialmente vuoto
+            size=24,
+            weight="bold",
+            color=config.COLOR_PALETTE["primary"]
+        )
+
+        
         
         # Layout
         self.content = ft.Column([
