@@ -1,0 +1,6 @@
+flet
+numpy
+tensorflow
+opencv-python
+SpeechRecognition
+pyaudio
