@@ -1,1 +1,2 @@
-# L-impiccato2.0
+# MultiModalMan
+> MultiModalMan is an interactive, multi-modal Hangman game that combines various input methods—such as voice, text, and possibly gesture recognition—to create an engaging and accessible gameplay experience. Designed to demonstrate the power of multimodal interfaces, the game allows players to guess letters using different modes of communication, enhancing usability and immersion while showcasing the integration of multiple AI and input processing techniques
