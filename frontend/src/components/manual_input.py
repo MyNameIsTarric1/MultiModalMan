@@ -8,7 +8,6 @@ class ManualInput(ft.Container):
     def __init__(self, on_guess_callback=None):
         super().__init__()
         self.padding = 10
-        self.bgcolor = ft.Colors.BLUE_50
         self.border_radius = ft.border_radius.all(5)
         self.on_guess = on_guess_callback
         
@@ -16,7 +15,7 @@ class ManualInput(ft.Container):
         self.input_field = ft.TextField(
             label="Enter a letter",
             hint_text="Type a letter to guess",
-            width=100,
+            width=200,
             max_length=1,
             autofocus=False,
             on_submit=self._handle_input
@@ -25,7 +24,6 @@ class ManualInput(ft.Container):
         # Submit button
         self.submit_button = ft.ElevatedButton(
             "Guess",
-            icon=ft.icons.CHECK,
             on_click=self._handle_input,
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
@@ -43,7 +41,6 @@ class ManualInput(ft.Container):
         
         # Layout
         self.content = ft.Column([
-            ft.Text("Manual Letter Input", weight="bold"),
             ft.Row([
                 self.input_field,
                 self.submit_button
