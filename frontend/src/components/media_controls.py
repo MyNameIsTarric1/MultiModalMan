@@ -2,10 +2,14 @@ import flet as ft
 import sys
 import os
 import speech_recognition as sr
+import asyncio
+from threading import Thread
+from agents import ItemHelpers, MessageOutputItem, Runner, trace, TResponseInputItem
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from src.components.media_display import VoiceAnimation
 from src.components.hand_drawing_recognition import HandDrawingRecognition
+from controller.agent import agent as hangman_agent
 
 class MediaControls:
     def __init__(self, show_notification_callback, on_guess_callback):
@@ -15,6 +19,13 @@ class MediaControls:
         # Media display components
         self.voice_animation = VoiceAnimation()
         self.hand_drawing = HandDrawingRecognition(on_prediction_callback=self._handle_drawing_prediction)
+        
+        # Agent chat components
+        self.agent_inputs = []  # Store conversation history
+        self.conversation_id = None  # Will be initialized when chat starts
+        self.chat_history = None  # Will be set in _create_chat_view
+        self.chat_input = None  # Will be set in _create_chat_view
+        self.send_button = None  # Will be set in _create_chat_view
         
         # Voice control buttons
         self.voice_start_btn = ft.ElevatedButton(
@@ -68,6 +79,152 @@ class MediaControls:
         
         # Currently active view (to track which one is open)
         self.active_view = None
+        self.current_tab = "chat"  # Changed default tab to chat
+        
+        # Create the navigation menu
+        self.navigation_rail = self._create_navigation_rail()
+        
+        # Create views
+        self.voice_view = self._create_voice_view()
+        self.drawing_view = self._create_drawing_view()
+        self.chat_view = self._create_chat_view()
+        
+        # View container - changed default view to chat
+        self.view_container = ft.Container(
+            content=self.chat_view,
+            expand=True
+        )
+        
+    def _create_navigation_rail(self):
+        """Create a navigation rail for switching between views"""
+        return ft.NavigationRail(
+            selected_index=2,  # Changed to 2 to select Chat by default (0=Voice, 1=Drawing, 2=Chat)
+            label_type=ft.NavigationRailLabelType.ALL,
+            min_width=100,
+            min_extended_width=180,
+            extended=True,
+            expand=True,
+            bgcolor=ft.Colors.WHITE,
+            destinations=[
+                ft.NavigationRailDestination(
+                    icon=ft.Icons.MIC_OUTLINED,
+                    selected_icon=ft.Icons.MIC,
+                    label="Voice Input"
+                ),
+                ft.NavigationRailDestination(
+                    icon=ft.Icons.DRAW_OUTLINED,
+                    selected_icon=ft.Icons.DRAW,
+                    label="Drawing"
+                ),
+                ft.NavigationRailDestination(
+                    icon=ft.Icons.CHAT_OUTLINED,
+                    selected_icon=ft.Icons.CHAT,
+                    label="Chat"
+                ),
+            ],
+            on_change=self._handle_tab_change
+        )
+        
+    def _handle_tab_change(self, e):
+        """Handle navigation rail tab change"""
+        index = e.control.selected_index
+        
+        # Reset any active views
+        self._reset_all_views()
+        
+        # Switch to the selected view
+        if index == 0:  # Voice input
+            self.current_tab = "voice"
+            self.view_container.content = self.voice_view
+        elif index == 1:  # Drawing
+            self.current_tab = "drawing"
+            self.view_container.content = self.drawing_view
+        elif index == 2:  # Chat (future implementation)
+            self.current_tab = "chat"
+            self.view_container.content = self.chat_view
+            
+        self.view_container.update()
+            
+    def _create_voice_view(self):
+        """Create the voice input view"""
+        return ft.Column([
+            ft.Text("Voice Input", style=config.SUBTITLE_STYLE),
+            self.voice_animation,
+            ft.Row([self.voice_start_btn, self.voice_stop_btn], 
+                   alignment=ft.MainAxisAlignment.CENTER),
+        ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
+        
+    def _create_drawing_view(self):
+        """Create the hand drawing view"""
+        return ft.Column([
+            ft.Text("Hand Drawing Recognition", style=config.SUBTITLE_STYLE),
+            self.hand_drawing,
+            ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
+                   alignment=ft.MainAxisAlignment.CENTER),
+            ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
+                   alignment=ft.MainAxisAlignment.CENTER),
+        ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
+        
+    def _create_chat_view(self):
+        """Create a chat view that aligns with the hangman text height"""
+        # Chat history display
+        self.chat_history = ft.ListView(
+            spacing=10,
+            padding=10,
+            auto_scroll=True,
+            expand=True,
+            height=400,  # Set a fixed height to match the hangman content area
+        )
+
+        # Initial welcome message
+        self.chat_history.controls.append(
+            ft.Container(
+                content=ft.Text("Welcome to Hangman Chat! I'll help you play the game. Type your message or use voice input.", 
+                                color=ft.Colors.BLACK),
+                bgcolor=ft.Colors.BLUE_50,
+                border_radius=ft.border_radius.all(10),
+                padding=10,
+                width=300,
+                alignment=ft.alignment.center_left
+            )
+        )
+        
+        # Text input field for chat functionality - enabled now
+        self.chat_input = ft.TextField(
+            hint_text="Type your message...",
+            border=ft.InputBorder.OUTLINE,
+            expand=True,
+            on_submit=self._send_message,  # Enable submitting with Enter key
+        )
+        
+        # Send button - enabled now
+        self.send_button = ft.IconButton(
+            icon=ft.Icons.SEND,
+            tooltip="Send message",
+            on_click=self._send_message
+        )
+
+        return ft.Column([
+            # Header with title aligned with game panel
+            ft.Text("Agent Chat", style=config.TITLE_STYLE),
+            # ft.Divider(height=10),
+                   
+            # Chat history container (takes most space)
+            ft.Container(
+                content=self.chat_history,
+                border=ft.border.all(2, config.COLOR_PALETTE["secondary"]),
+                border_radius=10,
+                padding=10,
+                expand=True,
+                height=250,  # Match height with game area
+            ),
+            
+            # Input area for chat functionality
+            ft.Row([
+                self.chat_input,
+                self.send_button
+            ], spacing=10)
+        ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
         
     def _start_voice_recording(self, e):
         self._reset_all_views()
@@ -75,23 +232,22 @@ class MediaControls:
         self.voice_animation.toggle_recording()
         self.show_notification("Voice recording started")
 
-        # Avvia il riconoscimento vocale
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             self.show_notification("Listening for a letter...")
             try:
                 audio = recognizer.listen(source, timeout=5)
-                text = recognizer.recognize_google(audio, language="it-IT").strip().upper()
-                if text.startswith("LETTERA "):
-                    possible_letter = text.replace("LETTERA ", "").strip()
+                text = recognizer.recognize_google(audio, language="en-US").strip().upper()
+                if text.startswith("LETTER "):
+                    possible_letter = text.replace("LETTER ", "").strip()
 
                     if len(possible_letter) == 1 and possible_letter.isalpha():
                         self.on_guess(possible_letter)
                         self.show_notification(f"Recognized letter: {possible_letter}")
                     else:
-                        self.show_notification(f"⚠️ Frase corretta ma lettera non valida: '{possible_letter}'")
+                        self.show_notification(f"Correct phrase but invalid letter: '{possible_letter}'")
                 else:
-                    self.show_notification(f"❌ Per favore di' 'lettera X', ad esempio 'lettera A'")
+                    self.show_notification("Please say 'letter X', for example 'letter A'")
                     
             except sr.UnknownValueError:
                 self.show_notification("Could not understand audio")
@@ -103,7 +259,7 @@ class MediaControls:
         self.voice_animation.stop_recording()
         self.active_view = None
 
-        self.on_guess(text)
+        #self.on_guess(text)
     
     def _stop_voice_recording(self, e):
         if self.active_view == "voice":
@@ -161,23 +317,152 @@ class MediaControls:
     def create_panel(self):
         """Create the right panel with media controls"""
         return ft.Container(
-            content=ft.Column([
-                # Voice section
-                ft.Text("Voice Input", style=config.SUBTITLE_STYLE),
-                self.voice_animation,
-                ft.Row([self.voice_start_btn, self.voice_stop_btn], 
-                       alignment=ft.MainAxisAlignment.CENTER),
-                
-                ft.Divider(height=10),
-                
-                # Hand Drawing section
-                ft.Text("Hand Drawing Recognition", style=config.SUBTITLE_STYLE),
-                self.hand_drawing,
-                ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
-                       alignment=ft.MainAxisAlignment.CENTER),
-                ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
-                       alignment=ft.MainAxisAlignment.CENTER),
-            ], spacing=15, scroll=ft.ScrollMode.AUTO),
+            content=ft.Row([
+                # Navigation rail inside a Container with explicit height
+                ft.Container(
+                    content=self.navigation_rail,
+                    height=600,  # Set a fixed height
+                ),
+                # Vertical divider
+                ft.VerticalDivider(width=1, thickness=1),
+                # Content container
+                self.view_container
+            ], expand=True),
             expand=True,
-            padding=20
+            padding=ft.padding.only(top=20, right=20, bottom=20)
         )
+    
+    def _send_message(self, e):
+        """Send a user message to the agent and get a response"""
+        # Get user message from input field
+        message = self.chat_input.value
+        if not message or message.strip() == "":
+            return  # Don't send empty messages
+            
+        # Clear the input field
+        self.chat_input.value = ""
+        self.chat_input.update()
+        
+        # Add user message to chat history
+        self._add_user_message(message)
+        
+        # Disable input while processing
+        self._set_input_state(disabled=True)
+        
+        # Start a background thread to handle the agent interaction
+        Thread(target=asyncio.run, args=(self._process_agent_response(message),)).start()
+    
+    def _add_user_message(self, message):
+        """Add a user message to the chat history"""
+        self.chat_history.controls.append(
+            ft.Container(
+                content=ft.Text(message, color=ft.Colors.BLACK),
+                bgcolor=ft.Colors.GREY_200,
+                border_radius=ft.border_radius.all(10),
+                padding=10,
+                width=300,
+                alignment=ft.alignment.center_right
+            )
+        )
+        self.chat_history.update()
+    
+    def _add_agent_message(self, message):
+        """Add an agent message to the chat history"""
+        self.chat_history.controls.append(
+            ft.Container(
+                content=ft.Text(message, color=ft.Colors.BLACK),
+                bgcolor=ft.Colors.BLUE_50,
+                border_radius=ft.border_radius.all(10),
+                padding=10,
+                width=300,
+                alignment=ft.alignment.center_left
+            )
+        )
+        self.chat_history.update()
+    
+    async def _process_agent_response(self, message):
+        """Process the user message and get a response from the agent"""
+        try:
+            # Initialize conversation ID if first message
+            if not self.conversation_id:
+                import uuid
+                self.conversation_id = str(uuid.uuid4().hex[:16])
+            
+            # Add message to agent inputs
+            self.agent_inputs.append({"content": message, "role": "user"})
+            
+            # Run the agent within a trace
+            with trace("Game Agent", group_id=self.conversation_id):
+                result = await Runner.run(hangman_agent, input=self.agent_inputs)
+                
+                # Process the agent's response
+                for item in result.new_items:
+                    if isinstance(item, MessageOutputItem):
+                        text = ItemHelpers.text_message_output(item)
+                        if text:
+                            # Update the UI in the main thread
+                            await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, text)
+                            
+                            # Check if the agent's response contains a guess to process
+                            self._process_agent_guess(text)
+            
+            # Update inputs for the next conversation turn
+            self.agent_inputs = result.to_input_list()
+            
+            # Re-enable the chat input
+            await asyncio.get_event_loop().run_in_executor(None, self._set_input_state, False)
+        
+        except Exception as e:
+            error_message = f"Error processing message: {str(e)}"
+            await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, error_message)
+            await asyncio.get_event_loop().run_in_executor(None, self._set_input_state, False)
+    
+    def _process_agent_guess(self, message):
+        """Check if agent message contains a letter guess and process it"""
+        # Look for patterns that indicate the agent has guessed a letter
+        if "Hai proposto la lettera" in message and "'" in message:
+            try:
+                # Extract the letter that was guessed
+                start_index = message.find("'") + 1
+                end_index = message.find("'", start_index)
+                if start_index > 0 and end_index > start_index:
+                    letter = message[start_index:end_index]
+                    if len(letter) == 1 and letter.isalpha():
+                        # Process the guess using the game's callback
+                        self.on_guess(letter)
+            except Exception as e:
+                print(f"Error processing agent guess: {e}")
+    
+    def _set_input_state(self, disabled=False):
+        """Enable or disable the chat input components"""
+        self.chat_input.disabled = disabled
+        self.send_button.disabled = disabled
+        self.chat_input.update()
+        self.send_button.update()
+    
+    def reset_chat(self):
+        """Reset the chat conversation when starting a new game"""
+        # Clear conversation history
+        self.agent_inputs = []
+        self.conversation_id = None
+        
+        # Clear chat history UI
+        if self.chat_history:
+            self.chat_history.controls.clear()
+            
+            # Add a new welcome message
+            self.chat_history.controls.append(
+                ft.Container(
+                    content=ft.Text("Ciao! Sono l'assistente del gioco dell'impiccato. Vuoi iniziare una nuova partita?", 
+                                    color=ft.Colors.BLACK),
+                    bgcolor=ft.Colors.BLUE_50,
+                    border_radius=ft.border_radius.all(10),
+                    padding=10,
+                    width=300,
+                    alignment=ft.alignment.center_left
+                )
+            )
+            self.chat_history.update()
+            
+        # Make sure input is enabled
+        self._set_input_state(disabled=False)
