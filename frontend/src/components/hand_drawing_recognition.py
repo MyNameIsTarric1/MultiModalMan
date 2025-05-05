@@ -152,7 +152,7 @@ class HandDrawingRecognition(ft.Container):
                 content=self.prediction_text,
                 padding=10,
                 border_radius=5,
-                bgcolor=ft.colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
+                bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
                 margin=ft.margin.only(top=10)
             )
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -198,7 +198,7 @@ class HandDrawingRecognition(ft.Container):
                     content=self.prediction_text,
                     padding=10,
                     border_radius=5,
-                    bgcolor=ft.colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
+                    bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
                     margin=ft.margin.only(top=10)
                 )
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -259,7 +259,7 @@ class HandDrawingRecognition(ft.Container):
                 content=self.prediction_text,
                 padding=10,
                 border_radius=5,
-                bgcolor=ft.colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
+                bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
                 margin=ft.margin.only(top=10)
             )
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)

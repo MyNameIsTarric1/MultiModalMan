@@ -109,7 +109,7 @@ class GamePanel:
         modal_overlay = ft.Container(
             width=self.page.width,
             height=self.page.height,
-            bgcolor=ft.colors.with_opacity(0.5, ft.colors.BLACK),
+            bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.BLACK),
             alignment=ft.alignment.center,
             expand=True
         )
@@ -124,7 +124,7 @@ class GamePanel:
             shadow=ft.BoxShadow(
                 spread_radius=1,
                 blur_radius=15,
-                color=ft.colors.BLACK54,
+                color=ft.Colors.BLACK54,
                 offset=ft.Offset(0, 0),
             ),
         )
@@ -157,11 +157,11 @@ class GamePanel:
             nonlocal show_password
             show_password = not show_password
             word_input.password = not show_password
-            password_toggle.icon = ft.icons.VISIBILITY if show_password else ft.icons.VISIBILITY_OFF
+            password_toggle.icon = ft.Icons.VISIBILITY if show_password else ft.Icons.VISIBILITY_OFF
             dialog_container.update()
         
         password_toggle = ft.IconButton(
-            icon=ft.icons.VISIBILITY_OFF,
+            icon=ft.Icons.VISIBILITY_OFF,
             tooltip="Show/Hide Word",
             on_click=toggle_password_visibility
         )
@@ -241,7 +241,7 @@ class GamePanel:
         dialog_content = ft.Column([
             ft.Row([
                 ft.Text("Start New Game", size=22, weight="bold"),
-                ft.IconButton(icon=ft.icons.CLOSE, on_click=close_dialog)
+                ft.IconButton(icon=ft.Icons.CLOSE, on_click=close_dialog)
             ], alignment="spaceBetween"),
             ft.Divider(),
             ft.Text("Choose how to start a new game:"),
@@ -350,16 +350,13 @@ class GamePanel:
         return ft.Container(
             content=ft.Column([
                 ft.Text("Hangman", style=config.TITLE_STYLE),
-                ft.Divider(height=10),
-                
                 # Game control buttons in a row
                 ft.Row([
                     self.start_btn,
                     self.stop_btn,
                     self.finish_btn
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ], alignment=ft.MainAxisAlignment.SPACE_EVENLY),
                 
-                ft.Divider(height=20),
                 
                 # Game display (updated word)
                 self.display,
