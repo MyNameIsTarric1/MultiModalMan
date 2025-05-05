@@ -1,18 +1,17 @@
-# import openai
 from agents import ItemHelpers, MessageOutputItem, Runner, trace,TResponseInputItem, function_tool, Agent
-from frontend.src.app.state_manager import GameStateManager  # <-- Importa il tuo
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from frontend.src.app.state_manager import GameStateManager
 import asyncio
 import uuid
+from dotenv import load_dotenv
 
-# --- Funzione principale di esecuzione ---
-os.environ["OPENAI_API_KEY"]="inserisci qui la tua chiave progetto"
+load_dotenv()
 
-# Inizializza il tuo vero gestore di stato
 manager = GameStateManager()
 state = {"initialized": False}
 
-# TOOL 1: Inizia nuova partita
 @function_tool
 def start_game(params=None) -> str:
     source = (params or {}).get("word_choice", "agente")
@@ -22,14 +21,12 @@ def start_game(params=None) -> str:
     else:
         return "Perfetto! Scrivi ora la parola che deve essere indovinata."
 
-# TOOL 2: L'utente imposta la parola segreta
 @function_tool
 def set_user_word(params):
     word = params["word"]
     state["game_state"] = manager.initialize_game(word)
     return f"Parola impostata! È lunga {len(word)} lettere. Inizia pure."
 
-# TOOL 3: L'utente propone una lettera
 @function_tool
 def guess_letter(params):
     letter = params["letter"].upper()
@@ -50,7 +47,6 @@ def guess_letter(params):
         return msg + f" 💀 Hai perso. La parola era '{game_state.secret_word}'. Vuoi riprovare?"
     return msg
 
-# TOOL 4: Riavvia una nuova partita
 @function_tool
 def restart(params=None):
     state["game_state"] = None
@@ -84,7 +80,6 @@ game_restarter_agent = Agent(
     tools=[restart],
 )
 
-# CREA AGENTE
 agent = Agent(
     name="impiccato_game_agent",
     instructions=
@@ -102,22 +97,18 @@ agent = Agent(
 		Se la parola è completata o si perdono tutti i tentativi, chiedi se vuole iniziare una nuova partita.
 	""",
     tools=[
-        # openai.agent.Tool(name="start_game", description="Inizia una nuova partita", function=start_game),
         welcome_agent.as_tool(
             tool_name = "welcome_agent",
             tool_description = "Accoglie l'utente e spiega le regole del gioco.",
         ),
-        # openai.agent.Tool(name="set_user_word", description="L'utente imposta la parola da indovinare", function=set_user_word),
         wordsetter_agent.as_tool(
             tool_name = "wordsetter_agent",
             tool_description = "L'utente o l'agente sceglie una parola da indovinare.",
         ),
-        # openai.agent.Tool(name="guess_letter", description="L'utente propone una lettera", function=guess_letter),
         letter_guesser_agent.as_tool(
             tool_name = "letter_guesser_agent",
             tool_description = "L'utente propone una lettera da indovinare.",
         ),
-        # openai.agent.Tool(name="restart", description="Riavvia una nuova partita", function=restart),
         game_restarter_agent.as_tool(
             tool_name = "game_restarter_agent",
             tool_description = "Riavvia una nuova partita.",
@@ -125,14 +116,12 @@ agent = Agent(
     ]
 )
 
-# Loop di esempio testuale
 async def main():
     inputs: list[TResponseInputItem] = []
     conversation_id = str(uuid.uuid4().hex[:16])
 
-
     while True:
-        user_input = input("👤 Tu: ")
+        user_input = input("User: ")
         inputs.append({"content": user_input, "role": "user"})
 
         with trace("Game Agent", group_id=conversation_id):
