@@ -16,7 +16,7 @@ class VoiceAnimation(ft.Container):
         super().__init__()
         self.height = 150
         self.width = None  # Remove fixed width to allow responsive sizing
-        self.bgcolor = ft.Colors.WHITE  # Fix: Use ft.Colors instead of ft.colors 
+        self.bgcolor = ft.Colors.WHITE  # Fix: Use ft.Colors instead of ft.Colors 
         self.border = ft.border.all(2, config.COLOR_PALETTE["secondary"])
         self.border_radius = 10
         self.padding = 10
