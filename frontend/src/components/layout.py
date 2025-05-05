@@ -12,7 +12,7 @@ class AppLayout:
         self.page.title = "Multimodal Hangman"
         self.page.vertical_alignment = "center"
         self.page.horizontal_alignment = "center"
-        self.page.padding = 30
+        #self.page.padding = 30
         self.page.bgcolor = config.COLOR_PALETTE["background"]
         self.page.scroll = "auto"  # Enable scrolling if content overflows
         
@@ -46,9 +46,9 @@ class AppLayout:
             visible=True
         )
         
-        # Main row with responsive properties
+        # Main row with responsive properties - swapped the panels
         main_row = ft.Row(
-            [left_panel, divider, right_panel],
+            [right_panel, divider, left_panel],  # Swapped order: media controls left, game logic right
             expand=True,
             alignment=ft.MainAxisAlignment.CENTER,
             vertical_alignment=ft.CrossAxisAlignment.START
