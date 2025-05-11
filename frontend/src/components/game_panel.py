@@ -9,9 +9,10 @@ from src.components.hangman_visual import HangmanVisual
 from src.components.manual_input import ManualInput
 
 class GamePanel:
-    def __init__(self, on_reset_callback=None, page=None):
-        self.state_manager = GameStateManager()
-        self.state_manager.initialize_game()
+    def __init__(self, on_reset_callback=None, page=None, state_manager=None):
+        # Use provided state_manager or create a new one if not provided
+        self.state_manager = state_manager if state_manager else GameStateManager()
+        print(f"GamePanel initialized with state_manager: {id(self.state_manager)}")
         self.on_reset = on_reset_callback
         self.page = page  # Store page reference
         
@@ -26,7 +27,6 @@ class GamePanel:
         
         # Game display components
         self.display = GameDisplay()
-        self.display.update(self.state_manager._get_state())
         
         # Add hangman visual component
         self.hangman_visual = HangmanVisual()
@@ -67,6 +67,58 @@ class GamePanel:
                 padding=15
             )
         )
+        
+        # Store current state but don't update visuals yet
+        # We'll update them after the controls are added to the page
+        self._initial_state = self.state_manager._get_state()
+        
+        # Check if a game is already running, otherwise initialize a new one
+        # but don't update the UI immediately
+        if not self.state_manager.current_game:
+            self._initial_state = self.state_manager.initialize_game()
+        
+        # Register as an observer to the state manager AFTER getting initial state
+        # to avoid early updates
+        self.state_manager.add_observer(self.on_state_changed)
+        
+        # Flag to indicate if controls have been properly added to the page
+        self._controls_added = False
+    
+    def on_state_changed(self, state):
+        """Called when the game state changes"""
+        try:
+            print(f"GamePanel received state change notification, word: {state.secret_word if hasattr(state, 'secret_word') else 'unknown'}")
+            print(f"Current display: {state.display_word}")
+            
+            # Only update UI components if they've been added to the page
+            if not hasattr(self, '_controls_added') or not self._controls_added:
+                print("Controls not yet added to page, skipping visual update")
+                # Store the state for later update
+                self._initial_state = state
+                return
+            
+            # Update the display
+            self.display.update(state)
+            
+            # Update the hangman visual
+            if self.state_manager.current_game:
+                wrong_guesses = self.state_manager.current_game.max_attempts - state.remaining_attempts
+                try:
+                    self.hangman_visual.update_state(wrong_guesses)
+                    print(f"Updated hangman visual to {wrong_guesses} wrong guesses")
+                except AssertionError as e:
+                    print(f"Couldn't update hangman visual yet: {e}")
+            
+            # Update the page to reflect changes
+            if self.page:
+                self.page.update()
+                print("Updated page with new game state")
+                
+            # Show error messages if any
+            if state.error_message:
+                self.show_message(state.error_message)
+        except Exception as e:
+            print(f"Error updating UI: {e}")
     
     # Helper method to show snackbar messages
     def show_message(self, message):
@@ -80,17 +132,35 @@ class GamePanel:
     
     def handle_guess(self, letter: str):
         """Process a letter guess"""
+        print(f"GamePanel handling guess for letter: {letter}")
+        
+        # Print debug info about current game state before processing guess
+        if self.state_manager.current_game:
+            print(f"Current game word before guess: {self.state_manager.current_game.secret_word}")
+            
         state = self.state_manager.process_guess(letter)
+        print(f"Guess processed, result: {state.display_word}, remaining attempts: {state.remaining_attempts}")
+        
+        # Skip UI updates if controls haven't been added yet
+        if not hasattr(self, '_controls_added') or not self._controls_added:
+            print("Controls not yet added - skipping visual updates for this guess")
+            return state
+            
         self.display.update(state)
         
         # Update the hangman visual based on wrong guesses
         # We can calculate wrong guesses from max attempts and remaining attempts
         wrong_guesses = self.state_manager.current_game.max_attempts - state.remaining_attempts
-        self.hangman_visual.update_state(wrong_guesses)
+        try:
+            self.hangman_visual.update_state(wrong_guesses)
+            print(f"Updated hangman visual after guess: wrong guesses = {wrong_guesses}")
+        except Exception as e:
+            print(f"Error updating hangman visual: {e}")
         
         # Update the page to reflect changes
         if self.page:
             self.page.update()
+            print("Updated page after guess")
             
         return state
     
@@ -319,10 +389,16 @@ class GamePanel:
     def reveal_word(self, e=None):
         """Reveal the hidden word"""
         if not self.state_manager.current_game:
+            # Check if no game is active
+            self.show_message("No active game to reveal word")
             return
             
-        # Get the current state
+        # Get the current state - make sure we're getting the freshest state
+        # This ensures we'll get the word that was set by the agent if it was used
         state = self.state_manager._get_state()
+        
+        # Debug print to check what word we're revealing
+        print(f"Attempting to reveal word: {self.state_manager.current_game.secret_word}")
         
         # Only reveal if the game is still ongoing or already revealed
         if state.game_status == "ongoing" or state.game_status == "revealed":
@@ -347,7 +423,7 @@ class GamePanel:
         
     def create_panel(self):
         """Create the left panel with game display"""
-        return ft.Container(
+        panel = ft.Container(
             content=ft.Column([
                 ft.Text("Hangman", style=config.TITLE_STYLE),
                 # Game control buttons in a row
@@ -375,3 +451,32 @@ class GamePanel:
             expand=True,
             padding=20
         )
+        
+        # Use a one-time callback to update UI components when they've been added to the page
+        def init_ui_components(e):
+            try:
+                print("Initializing UI components now that they're added to the page")
+                # Mark controls as added
+                self._controls_added = True
+                
+                # Now update the display with our stored state
+                if self._initial_state:
+                    self.display.update(self._initial_state)
+                    
+                # Now update the hangman visual if we have a game
+                if self.state_manager.current_game:
+                    wrong_guesses = self.state_manager.current_game.max_attempts - self._initial_state.remaining_attempts
+                    self.hangman_visual.update_state(wrong_guesses)
+                    print(f"Updated hangman visual to {wrong_guesses} wrong guesses")
+                    
+                # Force page update
+                if self.page:
+                    self.page.update()
+            except Exception as e:
+                print(f"Error in init_ui_components: {e}")
+        
+        # Schedule the initialization for after controls are added to the page
+        if self.page:
+            self.page.on_load = init_ui_components
+            
+        return panel

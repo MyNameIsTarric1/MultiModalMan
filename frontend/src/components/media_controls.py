@@ -9,12 +9,21 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from src.components.media_display import VoiceAnimation
 from src.components.hand_drawing_recognition import HandDrawingRecognition
-from controller.agent import agent as hangman_agent
+from controller.agent import agent as hangman_agent, manager as agent_game_manager
+import inspect
+
+# Print debugging info about the imported GameStateManager from agent
+print(f"MediaControls using agent's GameStateManager from: {inspect.getmodule(agent_game_manager).__file__}")
+print(f"Agent's GameStateManager instance: {id(agent_game_manager)}")
 
 class MediaControls:
     def __init__(self, show_notification_callback, on_guess_callback):
         self.show_notification = show_notification_callback
         self.on_guess = on_guess_callback
+        
+        # Store reference to agent's GameStateManager
+        self.agent_game_manager = agent_game_manager
+        print(f"MediaControls initialized with agent's game manager: {id(self.agent_game_manager)}")
         
         # Media display components
         self.voice_animation = VoiceAnimation()
@@ -392,6 +401,7 @@ class MediaControls:
             self.agent_inputs.append({"content": message, "role": "user"})
             
             # Run the agent within a trace
+            print("===MEDIA_CONTROLS=== Running agent with user message")
             with trace("Game Agent", group_id=self.conversation_id):
                 result = await Runner.run(hangman_agent, input=self.agent_inputs)
                 
@@ -400,12 +410,21 @@ class MediaControls:
                     if isinstance(item, MessageOutputItem):
                         text = ItemHelpers.text_message_output(item)
                         if text:
+                            print(f"===MEDIA_CONTROLS=== Agent response: {text[:50]}...")
                             # Update the UI in the main thread
                             await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, text)
                             
                             # Check if the agent's response contains a guess to process
                             self._process_agent_guess(text)
             
+            # Check game state after agent processing
+            if self.agent_game_manager.current_game:
+                print(f"===MEDIA_CONTROLS=== After agent response - current game word: {self.agent_game_manager.current_game.secret_word}")
+                print(f"===MEDIA_CONTROLS=== Game status: {self.agent_game_manager._get_state().game_status}")
+                print(f"===MEDIA_CONTROLS=== Current display: {self.agent_game_manager._get_state().display_word}")
+            else:
+                print("===MEDIA_CONTROLS=== No active game after agent response")
+                
             # Update inputs for the next conversation turn
             self.agent_inputs = result.to_input_list()
             
@@ -419,6 +438,8 @@ class MediaControls:
     
     def _process_agent_guess(self, message):
         """Check if agent message contains a letter guess and process it"""
+        print(f"===MEDIA_CONTROLS=== Processing potential guess from message: {message[:50]}...")
+        
         # Look for patterns that indicate the agent has guessed a letter
         if "Hai proposto la lettera" in message and "'" in message:
             try:
@@ -428,10 +449,21 @@ class MediaControls:
                 if start_index > 0 and end_index > start_index:
                     letter = message[start_index:end_index]
                     if len(letter) == 1 and letter.isalpha():
+                        print(f"===MEDIA_CONTROLS=== Found letter guess: '{letter}'")
+                        
+                        # Print game state before processing
+                        if self.agent_game_manager.current_game:
+                            print(f"===MEDIA_CONTROLS=== Before processing guess - word: {self.agent_game_manager.current_game.secret_word}")
+                        
                         # Process the guess using the game's callback
-                        self.on_guess(letter)
+                        result = self.on_guess(letter)
+                        print(f"===MEDIA_CONTROLS=== Guess processed, result: {result.display_word if result else 'No result'}")
+                        
+                        # Print game state after processing
+                        if self.agent_game_manager.current_game:
+                            print(f"===MEDIA_CONTROLS=== After processing guess - word: {self.agent_game_manager.current_game.secret_word}")
             except Exception as e:
-                print(f"Error processing agent guess: {e}")
+                print(f"===MEDIA_CONTROLS=== Error processing agent guess: {e}")
     
     def _set_input_state(self, disabled=False):
         """Enable or disable the chat input components"""

@@ -35,7 +35,16 @@ class HangmanVisual(ft.Container):
         wrong_guesses = max(0, min(wrong_guesses, 6))
         self.current_state = wrong_guesses
         self.content = self.states[wrong_guesses]
-        self.update()
+        
+        # Only call update if this control has been added to the page
+        # This prevents the "Control must be added to the page first" error
+        try:
+            self.update()
+        except AssertionError as e:
+            if "must be added to the page first" in str(e):
+                print("Hangman visual not yet added to page, state will be visible when added")
+            else:
+                raise
         
     def _create_state0(self):
         # Base only
