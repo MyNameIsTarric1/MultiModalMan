@@ -14,14 +14,24 @@ def main(page: ft.Page):
     ft.page = page
     print(f"Global page reference set: {page}")
     
+    # Import the agent's GameStateManager to ensure we're using the same instance
+    from controller.agent import manager as agent_game_manager
+    import inspect
+    print(f"Main using agent's GameStateManager from: {inspect.getmodule(agent_game_manager).__file__}")
+    print(f"Agent's GameStateManager instance in main: {id(agent_game_manager)}")
+    
+    # Set up page properties
+    page.title = "Hangman Game"
+    page.on_disconnect = lambda _: print("Page disconnected")
+    
     # Initialize the app layout
     app_layout = AppLayout(page)
     
-    # Initialize game panel - pass page reference
-    game_panel = GamePanel(page=page)
-    print(f"Game panel initialized with page: {page}")
+    # Initialize game panel with the agent's GameStateManager
+    game_panel = GamePanel(page=page, state_manager=agent_game_manager)
+    print(f"Game panel initialized with page: {page} and agent's GameStateManager")
     
-    # Initialize media controls
+    # Initialize media controls with a reference to the agent's GameStateManager
     media_controls = MediaControls(
         show_notification_callback=app_layout.show_notification,
         on_guess_callback=game_panel.handle_guess
