@@ -98,49 +98,57 @@ class MediaControls:
         self.active_view = None
         self.current_tab = "chat"  # Changed default tab to chat
         
-        # Create the navigation menu
-        self.navigation_rail = self._create_navigation_rail()
-        
-        # Create views
+        # Create views first
         self.voice_view = self._create_voice_view()
         self.drawing_view = self._create_drawing_view()
         self.chat_view = self._create_chat_view()
-        
-        # View container - changed default view to chat
+
+        # Initialize view container
         self.view_container = ft.Container(
-            content=self.chat_view,
+            content=self.chat_view,  # Default to chat view
             expand=True
         )
         
-    def _create_navigation_rail(self):
-        """Create a navigation rail for switching between views"""
-        return ft.NavigationRail(
-            selected_index=2,  # Changed to 2 to select Chat by default (0=Voice, 1=Drawing, 2=Chat)
-            label_type=ft.NavigationRailLabelType.ALL,
-            min_width=100,
-            min_extended_width=180,
-            extended=True,
-            expand=True,
-            bgcolor=ft.Colors.WHITE,
+        # Create the Cupertino navigation bar
+        self.navigation_bar = self._create_navigation_bar()
+        
+        # Main container that holds everything
+        self.container = ft.Column(
+            controls=[
+                self.navigation_bar,
+                self.view_container
+            ],
+            expand=True
+        )
+
+    def _create_navigation_bar(self):
+        """Create a Cupertino navigation bar for switching between views"""
+        return ft.NavigationBar(
+            bgcolor=ft.colors.WHITE,
+            selected_index=2,  # Start with Chat selected
             destinations=[
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.MIC_OUTLINED,
-                    selected_icon=ft.Icons.MIC,
-                    label="Voice Input"
+                ft.NavigationBarDestination(
+                    icon=ft.icons.MIC_OUTLINED,
+                    selected_icon=ft.icons.MIC,
+                    label="Voice"
                 ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.DRAW_OUTLINED,
-                    selected_icon=ft.Icons.DRAW,
+                ft.NavigationBarDestination(
+                    icon=ft.icons.DRAW_OUTLINED,
+                    selected_icon=ft.icons.DRAW,
                     label="Drawing"
                 ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.CHAT_OUTLINED,
-                    selected_icon=ft.Icons.CHAT,
+                ft.NavigationBarDestination(
+                    icon=ft.icons.CHAT_OUTLINED,
+                    selected_icon=ft.icons.CHAT,
                     label="Chat"
                 ),
             ],
             on_change=self._handle_tab_change
         )
+
+    def build(self):
+        """Return the main container"""
+        return self.container
         
     def _handle_tab_change(self, e):
         """Handle navigation rail tab change"""
@@ -287,7 +295,7 @@ class MediaControls:
                 self.voice_animation.letter_display.color = ft.Colors.GREY_600
                 self.voice_animation.letter_display.size = 24
                 self.voice_animation.letter_display.update()
-            except sr.RequestError as e:
+            except sr.RequestError:
                 self.voice_animation.letter_display.value = "Service Error"
                 self.voice_animation.letter_display.color = ft.Colors.RED_600
                 self.voice_animation.letter_display.size = 24
@@ -304,12 +312,27 @@ class MediaControls:
         #self.on_guess(text)
     
     def _stop_voice_recording(self, _):
-        if self.active_view == "voice":
-            self.voice_animation.stop_recording()
-            self.active_view = None
-            # Reset letter display
-            self.voice_animation.letter_display.value = ""
-            self.voice_animation.letter_display.update()
+        """Stop recording and process the audio"""
+        try:
+            # Stop recording
+            self.recording = False
+            self.audio = self.recognizer.listen(self.source, timeout=1)
+            
+            try:
+                # Try to recognize the speech
+                text = self.recognizer.recognize_google(self.audio)
+                # Process the recognized text (single letter)
+                if len(text) >= 1:
+                    letter = text[0].lower()
+                    self.on_guess(letter)
+                else:
+                    self.show_notification("No speech detected. Please try again.")
+            except sr.UnknownValueError:
+                self.show_notification("Could not understand audio. Please try again.")
+            except sr.RequestError:
+                self.show_notification("Could not request results. Check your internet connection.")
+        except Exception as e:
+            self.show_notification(f"Error stopping voice recording: {e}")
     
     def _start_hand_drawing(self, e):
         self._reset_all_views()
@@ -359,21 +382,11 @@ class MediaControls:
         self.reset_chat()
         
     def create_panel(self):
-        """Create the right panel with media controls"""
+        """Create the left panel with media controls"""
         return ft.Container(
-            content=ft.Row([
-                # Navigation rail inside a Container with explicit height
-                ft.Container(
-                    content=self.navigation_rail,
-                    height=600,  # Set a fixed height
-                ),
-                # Vertical divider
-                ft.VerticalDivider(width=1, thickness=1),
-                # Content container
-                self.view_container
-            ], expand=True),
-            expand=True,
-            padding=ft.padding.only(top=20, right=20, bottom=20)
+            content=self.container,
+            expand=1,  # Take up 1 part of the space
+            padding=20,
         )
     
     def _send_message(self, e):
