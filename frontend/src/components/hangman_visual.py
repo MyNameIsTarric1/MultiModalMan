@@ -2,7 +2,6 @@ import flet as ft
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import config
 
 class HangmanVisual(ft.Container):
     def __init__(self):
@@ -53,7 +52,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             )
@@ -66,7 +65,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -74,7 +73,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             )
@@ -87,7 +86,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -95,7 +94,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -103,7 +102,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=60,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             )
@@ -116,7 +115,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -124,7 +123,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -132,7 +131,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=60,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -153,7 +152,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -161,7 +160,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -169,7 +168,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=60,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -199,7 +198,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -207,7 +206,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -215,7 +214,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=60,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -271,7 +270,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=100,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=40,
                 top=200
             ),
@@ -279,7 +278,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=4,
                 height=150,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -287,7 +286,7 @@ class HangmanVisual(ft.Container):
             ft.Container(
                 width=60,
                 height=4,
-                bgcolor=ft.Colors.BROWN,
+                bgcolor=ft.Colors.BLUE,
                 left=60,
                 top=50
             ),
@@ -334,22 +333,29 @@ class HangmanVisual(ft.Container):
                 left=122,
                 top=110
             ),
-            # Left leg
-            ft.Container(
-                width=40,
-                height=2,
-                bgcolor=ft.Colors.BLACK,
-                rotate=0.7,
-                left=90,
-                top=150
+        ft.Container(
+            width=2,
+            height=40,
+            bgcolor=ft.Colors.BLACK,
+            left=120,
+            top=150,
+            rotate=ft.transform.Rotate(
+                angle=0.5,
+                alignment=ft.alignment.top_center
             ),
-            # Right leg
-            ft.Container(
-                width=40,
-                height=2,
-                bgcolor=ft.Colors.BLACK,
-                rotate=-0.7,
-                left=120,
-                top=150
-            )
+        ),
+
+        # Right leg
+        ft.Container(
+            width=2,
+            height=40,
+            bgcolor=ft.Colors.BLACK,
+            left=120,
+            top=150,
+            rotate=ft.transform.Rotate(
+                angle=-0.5,
+                alignment=ft.alignment.top_center
+            ),
+        ),
+
         ])
