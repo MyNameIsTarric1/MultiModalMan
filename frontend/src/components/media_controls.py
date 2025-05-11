@@ -517,7 +517,7 @@ class MediaControls:
             # Add a new welcome message
             self.chat_history.controls.append(
                 ft.Container(
-                    content=ft.Text("Ciao! Sono l'assistente del gioco dell'impiccato. Vuoi iniziare una nuova partita?", 
+                    content=ft.Text("Hi! I'm the assistant for the hangman game. Do you want to start a new game?", 
                                     color=ft.Colors.BLACK),
                     bgcolor=ft.Colors.BLUE_50,
                     border_radius=ft.border_radius.all(10),
