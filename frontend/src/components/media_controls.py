@@ -36,6 +36,14 @@ class MediaControls:
         self.chat_input = None  # Will be set in _create_chat_view
         self.send_button = None  # Will be set in _create_chat_view
         
+        # Voice recognition for chat - NEW
+        self.is_recording_voice_for_chat = False
+        self.mic_button = ft.IconButton(
+            icon=ft.Icons.MIC,
+            tooltip="Voice to text",
+            on_click=self._toggle_voice_to_text
+        )
+        
         # Voice control buttons
         self.voice_start_btn = ft.ElevatedButton(
             "Start Voice Input",
@@ -231,7 +239,8 @@ class MediaControls:
             # Input area for chat functionality
             ft.Row([
                 self.chat_input,
-                self.send_button
+                self.send_button,
+                self.mic_button  # Add mic button to the chat input row
             ], spacing=10)
         ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
         
@@ -490,8 +499,10 @@ class MediaControls:
         """Enable or disable the chat input components"""
         self.chat_input.disabled = disabled
         self.send_button.disabled = disabled
+        self.mic_button.disabled = disabled
         self.chat_input.update()
         self.send_button.update()
+        self.mic_button.update()
     
     def reset_chat(self):
         """Reset the chat conversation when starting a new game"""
@@ -519,3 +530,72 @@ class MediaControls:
             
         # Make sure input is enabled
         self._set_input_state(disabled=False)
+    
+    # New voice-to-text functionality for chat
+    def _toggle_voice_to_text(self, e):
+        """Toggle voice recording for text input"""
+        if self.is_recording_voice_for_chat:
+            # Stop recording
+            self._stop_voice_to_text_recording()
+        else:
+            # Start recording
+            self._start_voice_to_text_recording()
+    
+    def _start_voice_to_text_recording(self):
+        """Start recording voice for text input"""
+        if self.is_recording_voice_for_chat:
+            return
+        
+        self.is_recording_voice_for_chat = True
+        # Change mic icon to indicate recording
+        self.mic_button.icon = ft.Icons.MIC_OFF
+        self.mic_button.bgcolor = ft.colors.RED_400
+        self.mic_button.update()
+        
+        self.show_notification("Voice recording started. Speak your message...")
+        
+        # Start voice recording in a separate thread to avoid blocking the UI
+        Thread(target=self._voice_to_text_worker).start()
+    
+    def _stop_voice_to_text_recording(self):
+        """Stop recording voice for text input"""
+        self.is_recording_voice_for_chat = False
+        # Reset mic button appearance
+        self.mic_button.icon = ft.Icons.MIC
+        self.mic_button.bgcolor = None
+        self.mic_button.update()
+        self.show_notification("Voice recording stopped")
+    
+    def _voice_to_text_worker(self):
+        """Worker thread to handle voice recording and conversion to text"""
+        recognizer = sr.Recognizer()
+        with sr.Microphone() as source:
+            try:
+                # Adjust for ambient noise and listen
+                recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
+                
+                # Use Google's speech recognition to convert to text
+                text = recognizer.recognize_google(audio, language="en-US").strip()
+                
+                # Update the chat input field with the recognized text - using page.update() which is thread-safe
+                self.chat_input.value = text
+                ft.page.update(self.chat_input)
+                self.show_notification(f"Recognized: {text}")
+                
+            except sr.UnknownValueError:
+                self.show_notification("Could not understand audio")
+            except sr.RequestError as e:
+                self.show_notification(f"Speech recognition service error: {e}")
+            except sr.WaitTimeoutError:
+                self.show_notification("Listening timed out")
+            except Exception as e:
+                self.show_notification(f"Error recording voice: {e}")
+            finally:
+                # Always reset the recording state
+                self.is_recording_voice_for_chat = False
+                
+                # Reset mic button appearance using page.update which is thread-safe
+                self.mic_button.icon = ft.Icons.MIC
+                self.mic_button.bgcolor = None
+                ft.page.update(self.mic_button)
