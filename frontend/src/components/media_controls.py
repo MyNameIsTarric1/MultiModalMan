@@ -165,7 +165,7 @@ class MediaControls:
     def _create_voice_view(self):
         """Create the voice input view"""
         return ft.Column([
-            ft.Text("Voice Input", style=config.SUBTITLE_STYLE),
+            ft.Text("Voice Input", style=config.TITLE_STYLE),
             self.voice_animation,
             ft.Row([self.voice_start_btn, self.voice_stop_btn], 
                    alignment=ft.MainAxisAlignment.CENTER),
@@ -174,13 +174,20 @@ class MediaControls:
     def _create_drawing_view(self):
         """Create the hand drawing view"""
         return ft.Column([
-            ft.Text("Hand Drawing Recognition", style=config.SUBTITLE_STYLE),
+            ft.Text("Hand Drawing", style=config.TITLE_STYLE),
             self.hand_drawing,
-            ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
-                   alignment=ft.MainAxisAlignment.CENTER),
-            ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
-                   alignment=ft.MainAxisAlignment.CENTER),
-        ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
+            # Buttons positioned below the canvas in a single group for better visibility
+            ft.Container(
+                content=ft.Column([
+                    ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
+                           alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Container(height=5),  # Small spacer
+                    ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
+                           alignment=ft.MainAxisAlignment.CENTER),
+                ], spacing=5),
+                margin=ft.margin.only(top=10)
+            ),
+        ], spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
         
     def _create_chat_view(self):
         """Create a chat view that aligns with the hangman text height"""
@@ -211,6 +218,7 @@ class MediaControls:
             hint_text="Type your message...",
             border=ft.InputBorder.OUTLINE,
             expand=True,
+            color=ft.Colors.BLACK,  # Make text darker for better visibility
             on_submit=self._send_message,  # Enable submitting with Enter key
         )
         
@@ -233,7 +241,7 @@ class MediaControls:
                 border_radius=10,
                 padding=10,
                 expand=True,
-                height=250,  # Match height with game area
+                height=650,  # Increased height for better visibility
             ),
             
             # Input area for chat functionality
@@ -248,11 +256,9 @@ class MediaControls:
         self._reset_all_views()
         self.active_view = "voice"
         self.voice_animation.toggle_recording()
-        self.show_notification("Voice recording started")
 
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            self.show_notification("Listening for a letter...")
             try:
                 audio = recognizer.listen(source, timeout=5)
                 text = recognizer.recognize_google(audio, language="en-US").strip().upper()
@@ -260,61 +266,78 @@ class MediaControls:
                     possible_letter = text.replace("LETTER ", "").strip()
 
                     if len(possible_letter) == 1 and possible_letter.isalpha():
+                        self.voice_animation.letter_display.value = possible_letter
+                        self.voice_animation.letter_display.color = ft.Colors.GREEN_600
+                        self.voice_animation.letter_display.size = 56
+                        self.voice_animation.letter_display.update()
                         self.on_guess(possible_letter)
-                        self.show_notification(f"Recognized letter: {possible_letter}")
                     else:
-                        self.show_notification(f"Correct phrase but invalid letter: '{possible_letter}'")
+                        self.voice_animation.letter_display.value = "Invalid"
+                        self.voice_animation.letter_display.color = ft.Colors.RED_600
+                        self.voice_animation.letter_display.size = 32
+                        self.voice_animation.letter_display.update()
                 else:
-                    self.show_notification("Please say 'letter X', for example 'letter A'")
+                    self.voice_animation.letter_display.value = "Say 'Letter X'"
+                    self.voice_animation.letter_display.color = ft.Colors.ORANGE_600
+                    self.voice_animation.letter_display.size = 28
+                    self.voice_animation.letter_display.update()
                     
             except sr.UnknownValueError:
-                self.show_notification("Could not understand audio")
+                self.voice_animation.letter_display.value = "Didn't understand"
+                self.voice_animation.letter_display.color = ft.Colors.GREY_600
+                self.voice_animation.letter_display.size = 24
+                self.voice_animation.letter_display.update()
             except sr.RequestError as e:
-                self.show_notification(f"STT service error: {e}")
+                self.voice_animation.letter_display.value = "Service Error"
+                self.voice_animation.letter_display.color = ft.Colors.RED_600
+                self.voice_animation.letter_display.size = 24
+                self.voice_animation.letter_display.update()
             except sr.WaitTimeoutError:
-                self.show_notification("Listening timed out")
+                self.voice_animation.letter_display.value = "Timeout"
+                self.voice_animation.letter_display.color = ft.Colors.AMBER_600
+                self.voice_animation.letter_display.size = 28
+                self.voice_animation.letter_display.update()
 
         self.voice_animation.stop_recording()
         self.active_view = None
 
         #self.on_guess(text)
     
-    def _stop_voice_recording(self, e):
+    def _stop_voice_recording(self, _):
         if self.active_view == "voice":
             self.voice_animation.stop_recording()
             self.active_view = None
-            self.show_notification("Voice recording stopped")
+            # Reset letter display
+            self.voice_animation.letter_display.value = ""
+            self.voice_animation.letter_display.update()
     
     def _start_hand_drawing(self, e):
         self._reset_all_views()
         self.active_view = "drawing"
         self.hand_drawing.start_camera()
-        self.show_notification("Hand drawing activated")
+        # Display status in the drawing UI instead of notification
     
     def _stop_hand_drawing(self, e):
         if self.active_view == "drawing":
             self.hand_drawing.stop_camera()
             self.active_view = None
-            self.show_notification("Hand drawing deactivated")
+            # Status is shown in the UI instead of notification
     
     def _clear_drawing_canvas(self, e):
         if self.active_view == "drawing":
             self.hand_drawing.clear_canvas()
-            self.show_notification("Drawing canvas cleared")
+            # Status is shown in the UI instead of notification
     
     def _recognize_drawn_letter(self, e):
         if self.active_view == "drawing":
-            self.show_notification("Analyzing drawn letter...")
-            
-            # Recognize the letter
+            # Recognize the letter - no need to show notification here anymore
             prediction, confidence = self.hand_drawing.recognize_letter()
             
             # If the recognition returned a valid prediction directly
             if prediction and confidence > 0.5:
                 self.on_guess(prediction)
-                self.show_notification(f"Recognized letter: {prediction} (Confidence: {confidence:.2f})")
-            else:
-                self.show_notification("Could not recognize letter with sufficient confidence")
+                # Instead of a notification, the result is displayed in the UI
+            # The UI will show a message if confidence is insufficient
     
     def _handle_drawing_prediction(self, prediction, confidence):
         """Handle prediction result from hand drawing recognition"""
