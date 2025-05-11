@@ -332,6 +332,9 @@ class MediaControls:
         """Reset all media controls"""
         self._reset_all_views()
         
+        # Clear the UI chat when resetting the game
+        self.reset_chat()
+        
     def create_panel(self):
         """Create the right panel with media controls"""
         return ft.Container(
