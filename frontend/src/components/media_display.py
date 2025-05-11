@@ -14,7 +14,7 @@ from config import config
 class VoiceAnimation(ft.Container):
     def __init__(self):
         super().__init__()
-        self.height = 150
+        self.height = 620  # Increased height for better visibility
         self.width = None  # Remove fixed width to allow responsive sizing
         self.bgcolor = ft.Colors.WHITE  # Fix: Use ft.Colors instead of ft.Colors 
         self.border = ft.border.all(2, config.COLOR_PALETTE["secondary"])
@@ -46,34 +46,48 @@ class VoiceAnimation(ft.Container):
             weight="bold"
         )
 
-        # Display per la lettera riconosciuta
+        # Display for the recognized letter/text - made more prominent
         self.letter_display = ft.Text(
-            value="",  # inizialmente vuoto
-            size=24,
+            value="",  # initially empty
+            size=32,  # Larger text size
             weight="bold",
-            color=config.COLOR_PALETTE["primary"]
+            color=config.COLOR_PALETTE["primary"],
+            text_align=ft.TextAlign.CENTER,
+            selectable=False
         )
 
         
         
         # Layout
         self.content = ft.Column([
-            self.label,
-            ft.Container(height=10),
-            ft.Row(
-                self.bars,
+            # Center the animation bars with a container to ensure vertical centering
+            ft.Container(
+                content=ft.Column([
+                    # Display voice recognition output in the center of the box
+                    self.letter_display,
+                    ft.Container(height=20),  # Spacing between text and animation
+                    ft.Row(
+                        self.bars,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        vertical_alignment=ft.CrossAxisAlignment.END,
+                        wrap=True  # Allow bars to wrap on smaller screens
+                    )
+                ], 
                 alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.END,
-                wrap=True  # Allow bars to wrap on smaller screens
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                alignment=ft.alignment.center,
+                expand=True  # Make it take available space for vertical centering
             )
-        ], alignment=ft.MainAxisAlignment.CENTER)
+        ], alignment=ft.MainAxisAlignment.CENTER, expand=True)
         
     def toggle_recording(self):
         self.recording = not self.recording
         
         if self.recording:
-            self.label.value = "Recording Voice..."
-            self.label.color = config.COLOR_PALETTE["error"]
+            # Show "Listening..." in the letter display instead of using label
+            self.letter_display.value = "Listening..."
+            self.letter_display.color = config.COLOR_PALETTE["error"]
+            self.letter_display.size = 28
             
             # Start animation
             self._start_animation()
@@ -82,18 +96,26 @@ class VoiceAnimation(ft.Container):
             
     def stop_recording(self):
         self.recording = False
-        self.label.value = "Voice Input Not Active"
-        self.label.color = config.COLOR_PALETTE["secondary"]
         
         # Stop animation thread
         self.stop_thread = True
         if self.animation_thread and self.animation_thread.is_alive():
             self.animation_thread.join(timeout=1.0)
             
-        # Reset bars
+        # Reset bars and completely hide them
         for bar in self.bars:
             bar.visible = False
             bar.height = 10
+            
+        # Clear letter display
+        self.letter_display.value = ""
+        
+        # Force UI update to clear the animation
+        try:
+            if hasattr(ft, 'page') and ft.page is not None:
+                ft.page.update(self)
+        except Exception as e:
+            print(f"Error updating UI after stopping recording: {e}")
     
     def _start_animation(self):
         # Make bars visible
@@ -113,7 +135,8 @@ class VoiceAnimation(ft.Container):
             # Try to capture page reference at the start of the thread
             # This is safer than accessing ft.page in a thread
             page_ref = ft.page
-        except:
+        except Exception as e:
+            print(f"Could not get page reference: {e}")
             pass
             
         while self.recording and not self.stop_thread:
