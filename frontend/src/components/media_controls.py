@@ -462,6 +462,27 @@ class MediaControls:
                         # Print game state after processing
                         if self.agent_game_manager.current_game:
                             print(f"===MEDIA_CONTROLS=== After processing guess - word: {self.agent_game_manager.current_game.secret_word}")
+                            
+                        # Force UI update via the notify_observers mechanism
+                        # This ensures the UI is updated even if the on_guess didn't trigger it
+                        self.agent_game_manager._notify_observers(self.agent_game_manager._get_state())
+                        
+                        # Try to access the global game_panel reference to force an update
+                        try:
+                            import sys
+                            if 'frontend.main' in sys.modules:
+                                from frontend.main import global_game_panel
+                                if global_game_panel:
+                                    print("Found global_game_panel, forcing UI update")
+                                    global_game_panel.force_update()
+                        except Exception as e:
+                            print(f"Error accessing global_game_panel: {e}")
+                        
+                        # Also look for the GamePanel instance from main.py to force update
+                        from frontend.main import main
+                        if hasattr(main, 'game_panel') and main.game_panel:
+                            print("Found game_panel reference in main, forcing UI update")
+                            main.game_panel.force_update()
             except Exception as e:
                 print(f"===MEDIA_CONTROLS=== Error processing agent guess: {e}")
     

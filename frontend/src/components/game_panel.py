@@ -90,11 +90,26 @@ class GamePanel:
             print(f"GamePanel received state change notification, word: {state.secret_word if hasattr(state, 'secret_word') else 'unknown'}")
             print(f"Current display: {state.display_word}")
             
-            # Only update UI components if they've been added to the page
+            # If controls are not yet added to the page, store state and check if we can force them to be added
             if not hasattr(self, '_controls_added') or not self._controls_added:
                 print("Controls not yet added to page, skipping visual update")
                 # Store the state for later update
                 self._initial_state = state
+                
+                # If we have a page reference, try to mark controls as added now
+                if hasattr(self, 'page') and self.page:
+                    print("Marking controls as added since we have a page reference")
+                    self._controls_added = True
+                    # Force immediate UI update instead of using timers
+                    try:
+                        self.display.update(state)
+                        if self.state_manager.current_game:
+                            wrong_guesses = self.state_manager.current_game.max_attempts - state.remaining_attempts
+                            self.hangman_visual.update_state(wrong_guesses)
+                        self.page.update()
+                        print("Forced immediate UI update after state change")
+                    except Exception as e:
+                        print(f"Error in UI update: {e}")
                 return
             
             # Update the display
@@ -115,7 +130,7 @@ class GamePanel:
                 print("Updated page with new game state")
                 
             # Show error messages if any
-            if state.error_message:
+            if hasattr(state, 'error_message') and state.error_message:
                 self.show_message(state.error_message)
         except Exception as e:
             print(f"Error updating UI: {e}")
@@ -479,4 +494,42 @@ class GamePanel:
         if self.page:
             self.page.on_load = init_ui_components
             
+            # Immediately mark controls as added since we have a page reference
+            self._controls_added = True
+            
+            # Schedule UI update using on_idle callback instead of a timer
+            # This will execute once when the app has some idle time
+            if hasattr(self.page, 'on_idle'):
+                def on_idle_update(e):
+                    print("Processing on_idle callback for UI initialization")
+                    if hasattr(self, '_initial_state') and self._initial_state:
+                        self.on_state_changed(self._initial_state)
+                self.page.on_idle = on_idle_update
+            
         return panel
+
+    def force_update(self):
+        """Force update the UI with the current state"""
+        try:
+            print("Manually forcing UI update")
+            self._controls_added = True
+            current_state = self.state_manager._get_state()
+            
+            # Update the display
+            self.display.update(current_state)
+            
+            # Update the hangman visual if we have a game
+            if self.state_manager.current_game:
+                wrong_guesses = self.state_manager.current_game.max_attempts - current_state.remaining_attempts
+                try:
+                    self.hangman_visual.update_state(wrong_guesses)
+                    print(f"Updated hangman visual to {wrong_guesses} wrong guesses")
+                except Exception as e:
+                    print(f"Error updating hangman visual: {e}")
+            
+            # Force page update
+            if self.page:
+                self.page.update()
+                print("Page updated with latest game state")
+        except Exception as e:
+            print(f"Error in force_update: {e}")
