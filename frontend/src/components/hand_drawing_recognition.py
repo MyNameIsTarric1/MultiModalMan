@@ -17,9 +17,9 @@ from config import config
 class HandDrawingRecognition(ft.Container):
     def __init__(self, on_prediction_callback=None):
         super().__init__()
-        self.height = 400
+        self.height = 620  # Further increased for better visibility
         self.width = None
-        self.bgcolor = ft.Colors.BLACK
+        self.bgcolor = ft.Colors.WHITE
         self.border = ft.border.all(2, config.COLOR_PALETTE["secondary"])
         self.border_radius = 10
         self.padding = 10
@@ -45,70 +45,70 @@ class HandDrawingRecognition(ft.Container):
         
         # Camera feed container
         self.camera_container = ft.Container(
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Camera height increased for better visibility
             border_radius=5,
             padding=0,
             margin=0,
             alignment=ft.alignment.center,
-            expand=True
+            expand=False
         )
         
         # Camera image
         self.camera_image = ft.Image(
             fit=ft.ImageFit.COVER,
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Camera height increased for better visibility
             src_base64="",
-            expand=True
+            expand=False
         )
         
         # Canvas container
         self.canvas_container = ft.Container(
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Canvas height increased for better visibility
             border_radius=5,
             padding=0,
             margin=0,
             alignment=ft.alignment.center,
-            expand=True
+            expand=False
         )
         
         # Canvas image
         self.canvas_image = ft.Image(
             fit=ft.ImageFit.COVER,
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Canvas height increased for better visibility
             src_base64="",
-            expand=True
+            expand=False
         )
         
         # Placeholder for camera
         self.camera_placeholder = ft.Container(
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Increased height for better visibility
             bgcolor=ft.Colors.BLACK,
             border_radius=5,
             alignment=ft.alignment.center,
-            expand=True,
+            expand=False,
             content=ft.Icon(
                 ft.Icons.VIDEOCAM_OFF,
-                size=50,
+                size=48,
                 color=ft.Colors.WHITE
             )
         )
         
         # Placeholder for canvas
         self.canvas_placeholder = ft.Container(
-            width=370,
-            height=320,
+            width=420,
+            height=240,  # Increased height for better visibility
             bgcolor=ft.Colors.BLACK,
             border_radius=5,
             alignment=ft.alignment.center,
-            expand=True,
+            expand=False,
             content=ft.Icon(
                 ft.Icons.DRAW,
-                size=50,
+                size=48,
                 color=ft.Colors.WHITE
             )
         )
@@ -123,7 +123,6 @@ class HandDrawingRecognition(ft.Container):
         
         # Prediction Text
         self.prediction_text = ft.Text(
-            "Draw a letter and click 'Recognize'",
             color=config.COLOR_PALETTE["primary"],
             size=18,
             weight="bold"
@@ -133,28 +132,18 @@ class HandDrawingRecognition(ft.Container):
         self.content = ft.Column([
             self.status_label,
             ft.Container(height=10),
-            ft.Row([
-                # Camera column
-                ft.Column([
-                    ft.Text("Camera Feed", weight="bold"),
-                    self.camera_placeholder
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                
-                # Canvas column
-                ft.Column([
-                    ft.Text("Drawing Canvas", weight="bold"),
-                    self.canvas_placeholder
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-            ], alignment=ft.MainAxisAlignment.CENTER),
+            # Camera section
+            ft.Container(height=5),
+            self.camera_placeholder,
             
-            # Prediction display
-            ft.Container(
-                content=self.prediction_text,
-                padding=10,
-                border_radius=5,
-                bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
-                margin=ft.margin.only(top=10)
-            )
+            ft.Container(height=15),  # Spacer between camera and canvas
+            
+            # Canvas section
+            ft.Container(height=5),
+            self.canvas_placeholder,
+            
+            ft.Container(height=10),  # Spacer before prediction display
+            
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         
     def start_camera(self):
@@ -179,28 +168,19 @@ class HandDrawingRecognition(ft.Container):
             new_content = ft.Column([
                 self.status_label,
                 ft.Container(height=10),
-                ft.Row([
-                    # Camera column
-                    ft.Column([
-                        ft.Text("Camera Feed", weight="bold"),
-                        self.camera_container
-                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    
-                    # Canvas column
-                    ft.Column([
-                        ft.Text("Drawing Canvas", weight="bold"),
-                        self.canvas_container
-                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                ], alignment=ft.MainAxisAlignment.CENTER),
                 
-                # Prediction display
-                ft.Container(
-                    content=self.prediction_text,
-                    padding=10,
-                    border_radius=5,
-                    bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
-                    margin=ft.margin.only(top=10)
-                )
+                # Camera section
+                ft.Container(height=5),
+                self.camera_container,
+                
+                ft.Container(height=15),  # Spacer between camera and canvas
+                
+                # Canvas section
+                ft.Container(height=5),
+                self.canvas_container,
+                
+                ft.Container(height=10),  # Spacer before prediction display
+                
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             
             self.content = new_content
@@ -240,28 +220,19 @@ class HandDrawingRecognition(ft.Container):
         new_content = ft.Column([
             self.status_label,
             ft.Container(height=10),
-            ft.Row([
-                # Camera column
-                ft.Column([
-                    ft.Text("Camera Feed", weight="bold"),
-                    self.camera_placeholder
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                
-                # Canvas column
-                ft.Column([
-                    ft.Text("Drawing Canvas", weight="bold"),
-                    self.canvas_placeholder
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-            ], alignment=ft.MainAxisAlignment.CENTER),
             
-            # Prediction display
-            ft.Container(
-                content=self.prediction_text,
-                padding=10,
-                border_radius=5,
-                bgcolor=ft.Colors.with_opacity(0.1, config.COLOR_PALETTE["secondary"]),
-                margin=ft.margin.only(top=10)
-            )
+            # Camera section
+            ft.Container(height=5),
+            self.camera_placeholder,
+            
+            ft.Container(height=15),  # Spacer between camera and canvas
+            
+            # Canvas section
+            ft.Container(height=5),
+            self.canvas_placeholder,
+            
+            ft.Container(height=10),  # Spacer before prediction display
+            
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         
         self.content = new_content
@@ -400,11 +371,18 @@ class HandDrawingRecognition(ft.Container):
         # Helper function to update UI
         def update_ui():
             try:
-                if hasattr(ft, 'page') and ft.page is not None:
-                    ft.page.update(self.camera_container)
-                    ft.page.update(self.canvas_container)
+                # Capture the page reference once
+                page_ref = getattr(ft, 'page', None)
+                if page_ref is not None:
+                    # Use a single update to refresh the entire component
+                    # This is safer than updating individual containers
+                    page_ref.update(self)
+            except AssertionError:
+                # Silently ignore assertion errors which are common during initialization
+                pass
             except Exception as e:
-                print(f"Error updating UI: {e}")
+                # Log other errors without causing a broken pipe
+                print(f"Camera update error: {str(e)[:100]}")
         
         # Loop while active
         while not self.stop_thread and self.video_capture and self.video_capture.isOpened():
@@ -427,8 +405,8 @@ class HandDrawingRecognition(ft.Container):
                 # Convert the frame to format usable by Flet
                 img_camera = Image.fromarray(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
                 
-                # Resize to fill container
-                img_camera = img_camera.resize((370, 320))
+                # Resize to fill container using new height for vertical layout
+                img_camera = img_camera.resize((370, 200))
                 
                 # Convert to base64
                 buffer_camera = io.BytesIO()
@@ -459,19 +437,23 @@ class HandDrawingRecognition(ft.Container):
     
     def _update_canvas_image(self):
         """Update the canvas image from the drawing canvas"""
-        # Create a copy of the canvas with cursor visualization
-        canvas_with_cursor = self.drawing_canvas.copy()
-        
-        # Convert the canvas to format usable by Flet
-        img_canvas = Image.fromarray(cv2.cvtColor(canvas_with_cursor, cv2.COLOR_BGR2RGB))
-        
-        # Resize to fill container
-        img_canvas = img_canvas.resize((370, 320))
-        
-        # Convert to base64
-        buffer_canvas = io.BytesIO()
-        img_canvas.save(buffer_canvas, format='JPEG', quality=90)
-        img_canvas_base64 = base64.b64encode(buffer_canvas.getvalue()).decode('utf-8')
-        
-        # Update the canvas image
-        self.canvas_image.src_base64 = img_canvas_base64
+        try:
+            # Create a copy of the canvas with cursor visualization
+            canvas_with_cursor = self.drawing_canvas.copy()
+            
+            # Convert the canvas to format usable by Flet
+            img_canvas = Image.fromarray(cv2.cvtColor(canvas_with_cursor, cv2.COLOR_BGR2RGB))
+            
+            # Resize to fill container - use new height for vertical layout
+            img_canvas = img_canvas.resize((370, 200))
+            
+            # Convert to base64
+            buffer_canvas = io.BytesIO()
+            img_canvas.save(buffer_canvas, format='JPEG', quality=90)
+            img_canvas_base64 = base64.b64encode(buffer_canvas.getvalue()).decode('utf-8')
+            
+            # Update the canvas image
+            self.canvas_image.src_base64 = img_canvas_base64
+        except Exception as e:
+            # Catch any errors that might occur during image processing
+            print(f"Error updating canvas image: {str(e)[:100]}")
