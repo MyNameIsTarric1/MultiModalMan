@@ -113,35 +113,35 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=160,  # Increased from 100
-                height=6,   # Increased from 4
+                width=160,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=64,    # Increased from 40
-                top=320     # Increased from 200
+                left=64,
+                top=320
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,
+                height=240,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Horizontal beam
             ft.Container(
-                width=60,
-                height=4,
+                width=96,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Rope
             ft.Container(
-                width=2,
-                height=20,
+                width=3,
+                height=32,
                 bgcolor=ft.Colors.GREY_700,
-                left=120,
-                top=50
+                left=189,
+                top=80
             )
         ])
         
@@ -150,44 +150,44 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,
+                top=320
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,
+                height=240,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Horizontal beam
             ft.Container(
-                width=60,
-                height=4,
+                width=96,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Rope
             ft.Container(
-                width=2,
-                height=20,
+                width=3,
+                height=32,
                 bgcolor=ft.Colors.GREY_700,
-                left=120,
-                top=50
+                left=189,
+                top=80
             ),
             # Head (circle)
             ft.Container(
-                width=30,
-                height=30,
-                border=ft.border.all(2, ft.Colors.BLACK),
-                border_radius=15,
-                left=105,
-                top=70
+                width=48,
+                height=48,
+                border=ft.border.all(3, ft.Colors.BLACK),
+                border_radius=24,
+                left=165,
+                top=112
             )
         ])
         
@@ -196,70 +196,70 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,
+                top=320
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,
+                height=240,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Horizontal beam
             ft.Container(
-                width=60,
-                height=4,
+                width=96,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Rope
             ft.Container(
-                width=2,
-                height=20,
+                width=3,
+                height=32,
                 bgcolor=ft.Colors.GREY_700,
-                left=120,
-                top=50
+                left=189,
+                top=80
             ),
             # Head (circle)
             ft.Container(
-                width=30,
-                height=30,
-                border=ft.border.all(2, ft.Colors.BLACK),
-                border_radius=15,
-                left=105,
-                top=70
+                width=48,
+                height=48,
+                border=ft.border.all(3, ft.Colors.BLACK),
+                border_radius=24,
+                left=165,
+                top=112
             ),
             # Body
             ft.Container(
-                width=2,
-                height=50,
+                width=3,
+                height=80,
                 bgcolor=ft.Colors.BLACK,
-                left=120,
-                top=100
+                left=189,
+                top=160
             ),
             # Left arm
             ft.Container(
-                width=30,
-                height=2,
+                width=48,
+                height=3,
                 bgcolor=ft.Colors.BLACK,
                 rotate=0.4,
-                left=90,
-                top=110
+                left=144,
+                top=176
             ),
             # Right arm
             ft.Container(
-                width=30,
-                height=2,
+                width=48,
+                height=3,
                 bgcolor=ft.Colors.BLACK,
                 rotate=-0.4,
-                left=122,
-                top=110
+                left=189,
+                top=176
             )
         ])
         
@@ -268,94 +268,94 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,
+                top=320
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,
+                height=240,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Horizontal beam
             ft.Container(
-                width=60,
-                height=4,
+                width=96,
+                height=6,
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,
+                top=80
             ),
             # Rope
             ft.Container(
-                width=2,
-                height=20,
+                width=3,
+                height=32,
                 bgcolor=ft.Colors.GREY_700,
-                left=120,
-                top=50
+                left=189,
+                top=80
             ),
             # Head (circle)
             ft.Container(
-                width=30,
-                height=30,
-                border=ft.border.all(2, ft.Colors.BLACK),
-                border_radius=15,
-                left=105,
-                top=70
+                width=48,
+                height=48,
+                border=ft.border.all(3, ft.Colors.BLACK),
+                border_radius=24,
+                left=165,
+                top=112
             ),
             # Body
             ft.Container(
-                width=2,
-                height=50,
+                width=3,
+                height=80,
                 bgcolor=ft.Colors.BLACK,
-                left=120,
-                top=100
+                left=189,
+                top=160
             ),
             # Left arm
             ft.Container(
-                width=30,
-                height=2,
+                width=48,
+                height=3,
                 bgcolor=ft.Colors.BLACK,
                 rotate=0.4,
-                left=90,
-                top=110
+                left=144,
+                top=176
             ),
             # Right arm
             ft.Container(
-                width=30,
-                height=2,
+                width=48,
+                height=3,
                 bgcolor=ft.Colors.BLACK,
                 rotate=-0.4,
-                left=122,
-                top=110
+                left=189,
+                top=176
             ),
-        ft.Container(
-            width=2,
-            height=40,
-            bgcolor=ft.Colors.BLACK,
-            left=120,
-            top=150,
-            rotate=ft.transform.Rotate(
-                angle=0.5,
-                alignment=ft.alignment.top_center
+            # Left leg
+            ft.Container(
+                width=3,
+                height=64,
+                bgcolor=ft.Colors.BLACK,
+                left=189,
+                top=240,
+                rotate=ft.transform.Rotate(
+                    angle=0.5,
+                    alignment=ft.alignment.top_center
+                ),
             ),
-        ),
-
-        # Right leg
-        ft.Container(
-            width=2,
-            height=40,
-            bgcolor=ft.Colors.BLACK,
-            left=120,
-            top=150,
-            rotate=ft.transform.Rotate(
-                angle=-0.5,
-                alignment=ft.alignment.top_center
+            # Right leg
+            ft.Container(
+                width=3,
+                height=64,
+                bgcolor=ft.Colors.BLACK,
+                left=189,
+                top=240,
+                rotate=ft.transform.Rotate(
+                    angle=-0.5,
+                    alignment=ft.alignment.top_center
+                ),
             ),
-        ),
 
         ])
