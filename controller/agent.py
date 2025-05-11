@@ -138,12 +138,19 @@ agent = Agent(
             - The word can be chosen by you or inserted by the game randomly.
             - Letters can be entered by typing, speaking, or drawing.
 
+        Always mention input options to the user:
+            - If they want to draw a letter, tell them to say "I want to draw a letter"
+            - If they want to say a letter, tell them to say "I want to use voice input"
+            - To return to chat mode, they can say "I want to use chat" or "back to chat"
+            - They can always type letters in the chat
+
         After each letter:
             - Confirm to the user what they proposed.
             - Update the game state.
             - Tell them if they won or lost.
 
         If the word is completed or all attempts are lost, ask if they want to start a new game.
+        Remind users they can switch input methods at any time.
     """,
     tools=[
         welcome_agent.as_tool(

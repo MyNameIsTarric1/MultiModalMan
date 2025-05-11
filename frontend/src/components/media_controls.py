@@ -164,9 +164,34 @@ class MediaControls:
         elif index == 1:  # Drawing
             self.current_tab = "drawing"
             self.view_container.content = self.drawing_view
-        elif index == 2:  # Chat (future implementation)
+        elif index == 2:  # Chat view
             self.current_tab = "chat"
+            # Create a fresh chat view each time we switch back
+            old_messages = []
+            if self.chat_history:
+                # Save existing messages
+                old_messages = [(control.content.value, control.bgcolor) 
+                              for control in self.chat_history.controls]
+            
+            # Create completely new chat view
+            self.chat_view = self._create_chat_view()
             self.view_container.content = self.chat_view
+            
+            # Restore previous messages if any
+            if old_messages:
+                self.chat_history.controls.clear()
+                for msg, bg_color in old_messages:
+                    self.chat_history.controls.append(
+                        ft.Container(
+                            content=ft.Text(msg, color=ft.Colors.BLACK),
+                            bgcolor=bg_color,
+                            border_radius=ft.border_radius.all(10),
+                            padding=10,
+                            width=300,
+                            alignment=ft.alignment.center_left if bg_color == ft.Colors.BLUE_50 
+                                    else ft.alignment.center_right
+                        )
+                    )
             
         self.view_container.update()
             
@@ -427,18 +452,43 @@ class MediaControls:
     
     def _add_agent_message(self, message):
         """Add an agent message to the chat history"""
-        self.chat_history.controls.append(
-            ft.Container(
-                content=ft.Text(message, color=ft.Colors.BLACK),
-                bgcolor=ft.Colors.BLUE_50,
-                border_radius=ft.border_radius.all(10),
-                padding=10,
-                width=300,
-                alignment=ft.alignment.center_left
+        try:
+            # Check if chat_history needs to be reinitialized
+            if not self.chat_history or not self.chat_history.page:
+                self.chat_history = self._create_chat_view().controls[1].content
+                
+            self.chat_history.controls.append(
+                ft.Container(
+                    content=ft.Text(message, color=ft.Colors.BLACK),
+                    bgcolor=ft.Colors.BLUE_50,
+                    border_radius=ft.border_radius.all(10),
+                    padding=10,
+                    width=300,
+                    alignment=ft.alignment.center_left
+                )
             )
-        )
-        self.chat_history.update()
+            
+            # Update only if the chat view is currently active
+            if self.current_tab == "chat" and self.chat_history.page:
+                self.chat_history.update()
+        except Exception as e:
+            print(f"Error adding agent message: {e}")
+            # If there's an error, queue the message for when chat is active
+            def delayed_add():
+                if self.chat_history and self.chat_history.page:
+                    self._add_agent_message(message)
+            if ft.page:
+                ft.page.add_action(delayed_add)
     
+    def _switch_to_view(self, view_name):
+        """Switch to a specific view programmatically"""
+        view_index = {"voice": 0, "drawing": 1, "chat": 2}
+        if view_name in view_index:
+            # Switch to view first
+            self.navigation_bar.selected_index = view_index[view_name]
+            # Always use the tab change handler to ensure proper view initialization
+            self._handle_tab_change(type('Event', (), {'control': self.navigation_bar})())
+            
     async def _process_agent_response(self, message):
         """Process the user message and get a response from the agent"""
         try:
@@ -446,6 +496,29 @@ class MediaControls:
             if not self.conversation_id:
                 import uuid
                 self.conversation_id = str(uuid.uuid4().hex[:16])
+            
+            # Check for view switching commands before sending to agent
+            lower_message = message.lower()
+            if "chat" in lower_message or "type" in lower_message:
+                self._switch_to_view("chat")
+                await asyncio.sleep(0.1)  # Give UI time to update
+                await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message,
+                    "I've switched back to chat mode. You can type your letters here.")
+                return
+            elif "draw" in lower_message and ("letter" in lower_message or "want" in lower_message):
+                self._switch_to_view("drawing")
+                await asyncio.sleep(0.1)  # Give UI time to update
+                await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, 
+                    "I've switched to drawing mode. You can now draw your letter on the canvas.\n" +
+                    "If you want to switch back, just say 'I want to use chat' or 'back to chat'.")
+                return
+            elif "voice" in lower_message and ("say" in lower_message or "want" in lower_message or "speak" in lower_message):
+                self._switch_to_view("voice")
+                await asyncio.sleep(0.1)  # Give UI time to update
+                await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, 
+                    "I've switched to voice mode. You can now say your letter starting with 'Letter' followed by your guess.\n" +
+                    "If you want to switch back, just say 'I want to use chat' or 'back to chat'.")
+                return
             
             # Add message to agent inputs
             self.agent_inputs.append({"content": message, "role": "user"})
@@ -558,8 +631,14 @@ class MediaControls:
             # Add a new welcome message
             self.chat_history.controls.append(
                 ft.Container(
-                    content=ft.Text("Hi! I'm the assistant for the hangman game. Do you want to start a new game?", 
-                                    color=ft.Colors.BLACK),
+                    content=ft.Text(
+                        "Hi! I'm the assistant for the hangman game. You can:\n" +
+                        "• Type letters in the chat\n" +
+                        "• Say 'I want to use voice input' to speak letters\n" +
+                        "• Say 'I want to draw a letter' to draw letters\n\n" +
+                        "Would you like to start a new game?",
+                        color=ft.Colors.BLACK
+                    ),
                     bgcolor=ft.Colors.BLUE_50,
                     border_radius=ft.border_radius.all(10),
                     padding=10,
