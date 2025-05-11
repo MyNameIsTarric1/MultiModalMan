@@ -6,12 +6,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class HangmanVisual(ft.Container):
     def __init__(self):
         super().__init__()
-        self.width = 200
-        self.height = 250
+        self.width = 320  # Increased from 200
+        self.height = 400  # Increased from 250
         self.bgcolor = ft.Colors.WHITE
-        self.border = ft.border.all(1, ft.Colors.GREY_400)
-        self.border_radius = ft.border_radius.all(5)
-        self.padding = 10
+        self.border = ft.border.all(2, ft.Colors.GREY_400)  # Slightly thicker border
+        self.border_radius = ft.border_radius.all(8)  # Slightly larger border radius
+        self.padding = 15  # Slightly more padding
         
         # States of hangman (0-6)
         self.states = [
@@ -50,11 +50,11 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,  # Increased from 100
+                height=6,   # Increased from 4
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,    # Increased from 40
+                top=320     # Increased from 200
             )
         ])
         
@@ -63,19 +63,19 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,  # Increased from 100
+                height=6,   # Increased from 4
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,    # Increased from 40
+                top=320     # Increased from 200
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,    # Increased from 4
+                height=240,  # Increased from 150
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,    # Increased from 60
+                top=80      # Increased from 50
             )
         ])
         
@@ -84,27 +84,27 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,  # Increased from 100
+                height=6,   # Increased from 4
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,    # Increased from 40
+                top=320     # Increased from 200
             ),
             # Vertical pole
             ft.Container(
-                width=4,
-                height=150,
+                width=6,    # Increased from 4
+                height=240,  # Increased from 150
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,    # Increased from 60
+                top=80      # Increased from 50
             ),
             # Horizontal beam
             ft.Container(
-                width=60,
-                height=4,
+                width=96,    # Increased from 60
+                height=6,    # Increased from 4
                 bgcolor=ft.Colors.BLUE,
-                left=60,
-                top=50
+                left=96,     # Increased from 60
+                top=80       # Increased from 50
             )
         ])
         
@@ -113,11 +113,11 @@ class HangmanVisual(ft.Container):
         return ft.Stack([
             # Base horizontal line
             ft.Container(
-                width=100,
-                height=4,
+                width=160,  # Increased from 100
+                height=6,   # Increased from 4
                 bgcolor=ft.Colors.BLUE,
-                left=40,
-                top=200
+                left=64,    # Increased from 40
+                top=320     # Increased from 200
             ),
             # Vertical pole
             ft.Container(
