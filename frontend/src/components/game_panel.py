@@ -325,11 +325,11 @@ class GamePanel:
         # Create dialog content
         dialog_content = ft.Column([
             ft.Row([
-                ft.Text("Start New Game", size=22, weight="bold"),
+                ft.Text("Start New Game", size=22, weight="bold", color=ft.colors.BLACK),
                 ft.IconButton(icon=ft.Icons.CLOSE, on_click=close_dialog)
             ], alignment="spaceBetween"),
             ft.Divider(),
-            ft.Text("Choose how to start a new game:"),
+            ft.Text("Choose how to start a new game:", color=ft.colors.BLACK87, size=16),
             ft.Container(height=10),
             ft.ElevatedButton(
                 "Use Random Word",
@@ -343,9 +343,10 @@ class GamePanel:
             ),
             ft.Text("— OR —", 
                    size=14,
-                   color=ft.Colors.GREY_600,
+                   color=ft.colors.BLUE_GREY_600,
+                   weight="bold",
                    text_align=ft.TextAlign.CENTER),
-            ft.Text("Enter your own word:", size=14),
+            ft.Text("Enter your own word:", size=14, color=ft.colors.BLACK87, weight="w500"),
             ft.Row([
                 word_input,
                 password_toggle
@@ -353,7 +354,7 @@ class GamePanel:
             ft.Text("The word will be hidden as you type.", 
                    size=12, 
                    italic=True, 
-                   color=ft.Colors.GREY_600),
+                   color=ft.colors.BLUE_GREY_700),
             ft.Container(height=10),
             # Final buttons row
             ft.Row([
@@ -409,30 +410,34 @@ class GamePanel:
             return
             
         # Get the current state - make sure we're getting the freshest state
-        # This ensures we'll get the word that was set by the agent if it was used
         state = self.state_manager._get_state()
         
         # Debug print to check what word we're revealing
         print(f"Attempting to reveal word: {self.state_manager.current_game.secret_word}")
         
         # Only reveal if the game is still ongoing or already revealed
-        if state.game_status == "ongoing" or state.game_status == "revealed":
+        if state.game_status in ["ongoing", "revealed"]:
             # Toggle between revealed and hidden
             if state.game_status == "revealed":
                 # Switch back to normal display
                 state.game_status = "ongoing"
                 state.error_message = "Word hidden again"
-                # Show notification
                 self.show_message("Word hidden again")
             else:
-                # Show the actual word instead of underscores
+                # Show the actual word
                 state.game_status = "revealed"
-                # Show notification
-                self.show_message(f"Word revealed: {self.state_manager.current_game.secret_word}")
-                
+                state.error_message = None
+                state.secret_word = self.state_manager.current_game.secret_word
+                self.show_message(f"Word revealed: {state.secret_word}")
+            
+            # Update the state manager's state
+            self.state_manager._notify_observers(state)
+            
             # Update display with current state
             self.display.update(state)
-            # Force page update
+            
+            # Force update both the display and the page
+            self.display.update()
             if self.page:
                 self.page.update()
         

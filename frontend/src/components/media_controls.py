@@ -183,19 +183,21 @@ class MediaControls:
         """Create the hand drawing view"""
         return ft.Column([
             ft.Text("Hand Drawing", style=config.TITLE_STYLE),
-            self.hand_drawing,
-            # Buttons positioned below the canvas in a single group for better visibility
             ft.Container(
                 content=ft.Column([
-                    ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
-                           alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Container(height=5),  # Small spacer
-                    ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
-                           alignment=ft.MainAxisAlignment.CENTER),
-                ], spacing=5),
-                margin=ft.margin.only(top=10)
+                    self.hand_drawing,
+                    ft.Container(height=2),  # Minimal spacer
+                    ft.Column([
+                        ft.Row([self.drawing_start_btn, self.drawing_stop_btn], 
+                               alignment=ft.MainAxisAlignment.CENTER),
+                        ft.Row([self.drawing_clear_btn, self.drawing_recognize_btn], 
+                               alignment=ft.MainAxisAlignment.CENTER),
+                    ], spacing=4),
+                ], spacing=4),
+                margin=0,
+                padding=0
             ),
-        ], spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
+        ], alignment=ft.MainAxisAlignment.START, spacing=8, scroll=ft.ScrollMode.AUTO, expand=True)
         
     def _create_chat_view(self):
         """Create a chat view that aligns with the hangman text height"""

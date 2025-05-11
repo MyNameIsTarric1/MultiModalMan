@@ -14,9 +14,9 @@ from config import config
 class VoiceAnimation(ft.Container):
     def __init__(self):
         super().__init__()
-        self.height = 620  # Increased height for better visibility
+        self.height = 450  # Standardized height
         self.width = None  # Remove fixed width to allow responsive sizing
-        self.bgcolor = ft.Colors.WHITE  # Fix: Use ft.Colors instead of ft.Colors 
+        self.bgcolor = ft.Colors.WHITE
         self.border = ft.border.all(2, config.COLOR_PALETTE["secondary"])
         self.border_radius = 10
         self.padding = 10
@@ -160,12 +160,12 @@ class VoiceAnimation(ft.Container):
 class CameraView(ft.Container):
     def __init__(self):
         super().__init__()
-        self.height = 400
+        self.height = 320  # Standardized height
         self.width = None
         self.bgcolor = ft.Colors.BLACK
         self.border = ft.border.all(2, config.COLOR_PALETTE["secondary"])
         self.border_radius = 10
-        self.padding = 10
+        self.padding = 8  # Reduced padding
         self.camera_active = False
         self.expand = True
         self.video_capture = None
@@ -174,8 +174,8 @@ class CameraView(ft.Container):
         
         # Container to hold the camera image (this provides better control)
         self.image_container = ft.Container(
-            width=370,              # Make slightly larger than parent
-            height=320,             # Make slightly larger than parent
+            width=350,              # Standardized width
+            height=280,             # Standardized height
             border_radius=5,
             padding=0,
             margin=0,
@@ -194,8 +194,8 @@ class CameraView(ft.Container):
         
         # Initial placeholder content
         self.placeholder = ft.Container(
-            width=370,              
-            height=320,             
+            width=350,              
+            height=280,             
             bgcolor=ft.Colors.BLACK,
             border_radius=5,
             alignment=ft.alignment.center,
@@ -242,7 +242,7 @@ class CameraView(ft.Container):
             # Update layout to show camera feed
             new_content = ft.Column([
                 self.label,
-                ft.Container(height=10),
+                ft.Container(height=4),  # Reduced spacing
                 self.image_container  # Use container instead of direct image
             ], alignment=ft.MainAxisAlignment.CENTER, expand=True)
             
