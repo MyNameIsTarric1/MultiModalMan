@@ -63,8 +63,10 @@ Replace `your_openai_api_key_here` with your actual OpenAI API key. You can get 
 To start the application, run the following command from the project's root directory:
 
 ```bash
-python frontend/main.py
+flet run frontend/main.py --web
 ```
+
+This will launch the application in your default web browser. The `--web` parameter ensures that the app opens as a web application rather than a desktop window.
 
 ## How to Play
 
