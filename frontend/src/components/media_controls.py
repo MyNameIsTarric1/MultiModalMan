@@ -4,7 +4,7 @@ import os
 import speech_recognition as sr
 import asyncio
 from threading import Thread
-from agents import ItemHelpers, MessageOutputItem, Runner, trace, TResponseInputItem
+from agents import ItemHelpers, MessageOutputItem, Runner, trace
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from src.components.media_display import VoiceAnimation
@@ -403,10 +403,28 @@ class MediaControls:
         
     def reset(self):
         """Reset all media controls"""
+        print("===MEDIA_CONTROLS=== Resetting media controls")
+        
+        # Reset all UI views first
         self._reset_all_views()
         
-        # Clear the UI chat when resetting the game
+        # Check current game state after reset
+        if self.agent_game_manager.current_game:
+            current_state = self.agent_game_manager._get_state()
+            print(f"===MEDIA_CONTROLS=== Current game after UI reset: word={self.agent_game_manager.current_game.secret_word}, display={current_state.display_word}")
+        else:
+            print("===MEDIA_CONTROLS=== No active game found after UI reset")
+        
+        # Clear and reset the chat history
         self.reset_chat()
+        
+        # Create a new conversation ID to start fresh
+        import uuid
+        self.conversation_id = str(uuid.uuid4().hex[:16])
+        print(f"===MEDIA_CONTROLS=== Created new conversation with ID: {self.conversation_id}")
+        
+        # Clear the agent inputs as well
+        self.agent_inputs = []
         
     def create_panel(self):
         """Create the left panel with media controls"""
@@ -496,6 +514,7 @@ class MediaControls:
             if not self.conversation_id:
                 import uuid
                 self.conversation_id = str(uuid.uuid4().hex[:16])
+                print(f"===MEDIA_CONTROLS=== Initialized new conversation with ID: {self.conversation_id}")
             
             # Check for view switching commands before sending to agent
             lower_message = message.lower()
@@ -519,6 +538,24 @@ class MediaControls:
                     "I've switched to voice mode. You can now say your letter starting with 'Letter' followed by your guess.\n" +
                     "If you want to switch back, just say 'I want to use chat' or 'back to chat'.")
                 return
+            
+            # Check if this is a message that might contain a letter guess
+            is_letter_guess = False
+            if len(message) == 1 and message.isalpha():
+                # Direct single letter input
+                is_letter_guess = True
+                print(f"===MEDIA_CONTROLS=== Direct letter input detected: {message}")
+            elif "guess" in lower_message.lower() and "letter" in lower_message.lower():
+                # Message about guessing a letter
+                is_letter_guess = True
+                print(f"===MEDIA_CONTROLS=== Letter guess request detected in: {message}")
+            
+            # If this is a letter guess, check game state first
+            if is_letter_guess:
+                if self.agent_game_manager.current_game:
+                    print(f"===MEDIA_CONTROLS=== Current game before guess: {self.agent_game_manager.current_game.secret_word}")
+                else:
+                    print("===MEDIA_CONTROLS=== No active game found before letter guess")
             
             # Add message to agent inputs
             self.agent_inputs.append({"content": message, "role": "user"})
@@ -556,6 +593,7 @@ class MediaControls:
         
         except Exception as e:
             error_message = f"Error processing message: {str(e)}"
+            print(f"===MEDIA_CONTROLS=== Exception in _process_agent_response: {str(e)}")
             await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, error_message)
             await asyncio.get_event_loop().run_in_executor(None, self._set_input_state, False)
     
@@ -563,49 +601,90 @@ class MediaControls:
         """Check if agent message contains a letter guess and process it"""
         print(f"===MEDIA_CONTROLS=== Processing potential guess from message: {message[:50]}...")
         
+        # Several patterns to recognize a letter guess
+        letter_pattern1 = "suggested the letter" 
+        letter_pattern2 = "Hai proposto la lettera"
+        letter_pattern3 = "guessed the letter"
+        letter_pattern4 = "letter"
+        
         # Look for patterns that indicate the agent has guessed a letter
-        if "Hai proposto la lettera" in message and "'" in message:
+        found_letter = None
+        
+        # Check if a letter is mentioned in quotes
+        if ("'" in message or '"' in message) and (letter_pattern1 in message or letter_pattern2 in message or 
+                                                  letter_pattern3 in message or letter_pattern4 in message):
             try:
-                # Extract the letter that was guessed
-                start_index = message.find("'") + 1
-                end_index = message.find("'", start_index)
-                if start_index > 0 and end_index > start_index:
-                    letter = message[start_index:end_index]
-                    if len(letter) == 1 and letter.isalpha():
-                        print(f"===MEDIA_CONTROLS=== Found letter guess: '{letter}'")
-                        
-                        # Print game state before processing
-                        if self.agent_game_manager.current_game:
-                            print(f"===MEDIA_CONTROLS=== Before processing guess - word: {self.agent_game_manager.current_game.secret_word}")
-                        
-                        # Process the guess using the game's callback
-                        result = self.on_guess(letter)
-                        print(f"===MEDIA_CONTROLS=== Guess processed, result: {result.display_word if result else 'No result'}")
-                        
-                        # Print game state after processing
-                        if self.agent_game_manager.current_game:
-                            print(f"===MEDIA_CONTROLS=== After processing guess - word: {self.agent_game_manager.current_game.secret_word}")
-                            
-                        # Force UI update via the notify_observers mechanism
-                        # This ensures the UI is updated even if the on_guess didn't trigger it
+                # Try to extract letter from the message (inside quotes)
+                # First look for single quotes
+                if "'" in message:
+                    start_index = message.find("'") + 1
+                    end_index = message.find("'", start_index)
+                    if start_index > 0 and end_index > start_index:
+                        potential_letter = message[start_index:end_index]
+                        if len(potential_letter) == 1 and potential_letter.isalpha():
+                            found_letter = potential_letter
+                # If not found in single quotes, try double quotes
+                elif '"' in message:
+                    start_index = message.find('"') + 1
+                    end_index = message.find('"', start_index)
+                    if start_index > 0 and end_index > start_index:
+                        potential_letter = message[start_index:end_index]
+                        if len(potential_letter) == 1 and potential_letter.isalpha():
+                            found_letter = potential_letter
+                
+                # If still not found, try to extract it from "letter X" pattern
+                if not found_letter and "letter" in message.lower():
+                    words = message.split()
+                    for i, word in enumerate(words):
+                        if word.lower() == "letter" and i+1 < len(words):
+                            next_word = words[i+1].strip("'.,:;!?")
+                            if len(next_word) == 1 and next_word.isalpha():
+                                found_letter = next_word
+                
+                # Finally, check if we found a valid letter to process
+                if found_letter:
+                    found_letter = found_letter.upper()
+                    print(f"===MEDIA_CONTROLS=== Found letter guess: '{found_letter}'")
+                    
+                    # Print game state before processing
+                    if self.agent_game_manager.current_game:
+                        print(f"===MEDIA_CONTROLS=== Before processing guess - word: {self.agent_game_manager.current_game.secret_word}")
+                    else:
+                        print("===MEDIA_CONTROLS=== No active game found before processing guess")
+                        return
+                    
+                    # Process the guess using the game's callback
+                    result = self.on_guess(found_letter)
+                    print(f"===MEDIA_CONTROLS=== Guess processed, result: {result.display_word if result else 'No result'}")
+                    
+                    # Print game state after processing
+                    if self.agent_game_manager.current_game:
+                        print(f"===MEDIA_CONTROLS=== After processing guess - word: {self.agent_game_manager.current_game.secret_word}")
+                    
+                    # Force UI update via the notify_observers mechanism
+                    # This ensures the UI is updated even if the on_guess didn't trigger it
+                    if self.agent_game_manager.current_game:
                         self.agent_game_manager._notify_observers(self.agent_game_manager._get_state())
-                        
-                        # Try to access the global game_panel reference to force an update
-                        try:
-                            import sys
-                            if 'frontend.main' in sys.modules:
-                                from frontend.main import global_game_panel
-                                if global_game_panel:
-                                    print("Found global_game_panel, forcing UI update")
-                                    global_game_panel.force_update()
-                        except Exception as e:
-                            print(f"Error accessing global_game_panel: {e}")
-                        
-                        # Also look for the GamePanel instance from main.py to force update
+                    
+                    # Try to access the global game_panel reference to force an update
+                    try:
+                        import sys
+                        if 'frontend.main' in sys.modules:
+                            from frontend.main import global_game_panel
+                            if global_game_panel:
+                                print("Found global_game_panel, forcing UI update")
+                                global_game_panel.force_update()
+                    except Exception as e:
+                        print(f"Error accessing global_game_panel: {e}")
+                    
+                    # Also look for the GamePanel instance from main.py to force update
+                    try:
                         from frontend.main import main
                         if hasattr(main, 'game_panel') and main.game_panel:
                             print("Found game_panel reference in main, forcing UI update")
                             main.game_panel.force_update()
+                    except Exception as e:
+                        print(f"Error accessing main.game_panel: {e}")
             except Exception as e:
                 print(f"===MEDIA_CONTROLS=== Error processing agent guess: {e}")
     
