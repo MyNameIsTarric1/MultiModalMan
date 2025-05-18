@@ -1,17 +1,24 @@
-from agents import ItemHelpers, MessageOutputItem, Runner, trace,TResponseInputItem, function_tool, Agent
+from agents import ItemHelpers, MessageOutputItem, Runner, trace, function_tool, Agent
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from frontend.src.app.state_manager import GameStateManager
+import inspect
 import asyncio
 import uuid
 from dotenv import load_dotenv
+from typing import TypedDict, List, Dict, Any
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from frontend.src.app.state_manager import GameStateManager
 
 load_dotenv()
 
+# Define TResponseInputItem type for type hints
+class TResponseInputItem(TypedDict):
+    content: str
+    role: str
+
 # Using the singleton pattern for GameStateManager
 # Print debug info about the import
-import inspect
 print(f"Agent using GameStateManager from: {inspect.getmodule(GameStateManager).__file__}")
 
 manager = GameStateManager()
@@ -26,12 +33,42 @@ def get_current_state():
     return None
 
 @function_tool
+def sync_with_game() -> str:
+    """Checks if there's an active game and syncs the agent with it"""
+    current_state = get_current_state()
+    print("===AGENT DEBUG=== Checking for active game")
+    
+    if not current_state or not manager.current_game:
+        print("===AGENT DEBUG=== No active game found during sync")
+        return "There's no active game at the moment. Would you like to start a new one?"
+    
+    # Store the game state
+    state["game_state"] = current_state
+    
+    # Get game details for a useful response
+    secret_word = current_state.secret_word
+    display_word = current_state.display_word
+    remaining_attempts = current_state.remaining_attempts
+    guessed_letters = ", ".join(sorted(current_state.guessed_letters)) if current_state.guessed_letters else "none"
+    
+    print(f"===AGENT DEBUG=== Successfully synced with active game, word: {secret_word}, display: {display_word}")
+    
+    return f"I've synced with your active game! The current state is: {display_word}. You have {remaining_attempts} attempts remaining. Letters guessed so far: {guessed_letters}. What letter would you like to guess next?"
+
+@function_tool
 def start_game(word_choice: str = "agent") -> str:
     """Starts a new hangman game
     
     Args:
         word_choice: Who chooses the word - 'agent' for agent, 'user' for user
     """
+    # Check if there's already an active game
+    current_state = get_current_state()
+    if current_state and manager.current_game:
+        # If there's an active game, sync with it first
+        state["game_state"] = current_state
+        print(f"===AGENT DEBUG=== Found active game with word: {state['game_state'].secret_word}")
+        
     source = word_choice
     print(f"===AGENT DEBUG=== start_game called with source: {source}")
     if source == "agent":
@@ -52,10 +89,23 @@ def set_user_word(word: str) -> str:
         word: The word to use in the game
     """
     print(f"===AGENT DEBUG=== set_user_word called with word: {word}")
-    # Initialize game with user's word, which will trigger UI update via observer
-    state["game_state"] = manager.initialize_game(word)
-    print(f"===AGENT DEBUG=== User set word: {word}, game state observers: {len(manager._observers)}")
-    return f"Word set! It's {len(word)} letters long. You can start now."
+    
+    # Check if there's already an active game
+    current_state = get_current_state()
+    if current_state and manager.current_game:
+        # If there's an active game, sync with it first
+        state["game_state"] = current_state
+        print(f"===AGENT DEBUG=== Found active game with word: {state['game_state'].secret_word}, syncing first")
+        
+        # Initialize game with user's word, which will trigger UI update via observer
+        state["game_state"] = manager.initialize_game(word)
+        print(f"===AGENT DEBUG=== User set word: {word}, game state observers: {len(manager._observers)}")
+        return f"Word set! It's {len(word)} letters long. You can start now!"
+    else:
+        # Initialize game with user's word, which will trigger UI update via observer
+        state["game_state"] = manager.initialize_game(word)
+        print(f"===AGENT DEBUG=== User set word: {word}, game state observers: {len(manager._observers)}")
+        return f"Word set! It's {len(word)} letters long. You can start now!"
 
 @function_tool
 def guess_letter(letter: str) -> str:
@@ -65,41 +115,75 @@ def guess_letter(letter: str) -> str:
         letter: The letter to guess
     """
     letter = letter.upper()
+    print(f"===AGENT DEBUG=== guess_letter called with letter: {letter}")
     
     # Make sure we have the latest game state
     current_state = get_current_state()
+    
+    # If no active game, try to sync first and then clearly indicate we need to start a game
+    if not current_state or not manager.current_game:
+        print("===AGENT DEBUG=== No active game found when trying to guess letter")
+        return "I need to check if there's an active game first. It seems there's no active game yet. Would you like to start a new game?"
+    
+    # We have an active game, so sync with it
     if current_state:
+        print(f"===AGENT DEBUG=== Found active game with word: {manager.current_game.secret_word}")
         state["game_state"] = current_state
     
-    # Process the guess and get updated state
-    game_state = manager.process_guess(letter)
+    try:
+        # Process the guess and get updated state
+        print(f"===AGENT DEBUG=== Processing guess for letter: {letter} in word: {manager.current_game.secret_word}")
+        game_state = manager.process_guess(letter)
+        
+        if game_state.error_message:
+            print(f"===AGENT DEBUG=== Error processing guess: {game_state.error_message}")
+            return f"Error: {game_state.error_message}"
 
-    if game_state.error_message:
-        return f"Error: {game_state.error_message}"
+        # Update the state dictionary
+        state["game_state"] = game_state
+        
+        # Build the response
+        print(f"===AGENT DEBUG=== Guess processed successfully, word: {game_state.secret_word}, display: {game_state.display_word}")
+        
+        # Format the response in Italian
+        msg = f"You suggested the letter '{letter}'. "
+        msg += "✅ Correct!" if letter in game_state.secret_word else "❌ Not in the word."
+        msg += f" Current word: {game_state.display_word} — Attempts remaining: {game_state.remaining_attempts}"
 
-    state["game_state"] = game_state
-    print(f"Agent guessed letter {letter} for word {game_state.secret_word}, current display: {game_state.display_word}")
-
-    msg = f"You suggested the letter '{letter}'. "
-    msg += "✅ Correct!" if letter in game_state.secret_word else "❌ Not in the word."
-    msg += f" Current word: {game_state.display_word} — Attempts remaining: {game_state.remaining_attempts}"
-
-    if game_state.game_status == "won":
-        return msg + " 🎉 You guessed the word! Want to start a new game?"
-    elif game_state.game_status == "lost":
-        return msg + f" 💀 You lost. The word was '{game_state.secret_word}'. Would you like to try again?"
-    return msg
+        if game_state.game_status == "won":
+            return msg + " 🎉 You guessed the word! Want to start a new game?"
+        elif game_state.game_status == "lost":
+            return msg + f" 💀 You lost. The word was '{game_state.secret_word}'. Would you like to try again?"
+        return msg
+        
+    except Exception as e:
+        print(f"===AGENT DEBUG=== Exception in guess_letter: {str(e)}")
+        return f"I encountered an error processing your guess: {str(e)}. Let's try syncing with the game first."
 
 @function_tool
 def restart() -> str:
     """Restarts the hangman game with a new random word
     """
-    # Instead of just setting state to None, properly initialize a new game
-    # This will trigger the observer notifications
+    # Print debug info about current state
+    if manager.current_game:
+        print(f"===AGENT DEBUG=== restart called, current word before restart: {manager.current_game.secret_word}")
+    else:
+        print("===AGENT DEBUG=== restart called but no active game found")
+        
     print(f"===AGENT DEBUG=== restart called, observers before restart: {len(manager._observers)}")
+    
+    # Initialize a new game, which will trigger the observer notifications
     state["game_state"] = manager.initialize_game()
     print(f"===AGENT DEBUG=== Agent restarted game with new word: {state['game_state'].secret_word}")
+    
     return "New game! Do you want me to choose the word or do you want to enter it yourself?"
+
+# Create a sync agent
+sync_agent = Agent(
+    name="sync_agent",
+    instructions="Sync with an active game if one exists.",
+    tools=[sync_with_game],
+)
 
 #  WELCOME AGENT
 welcome_agent = Agent(
@@ -144,6 +228,11 @@ agent = Agent(
             - To return to chat mode, they can say "I want to use chat" or "back to chat"
             - They can always type letters in the chat
 
+        IMPORTANT WORKFLOW FOR GUESSING LETTERS:
+            - When a user wants to guess a letter, always use the sync_agent tool first to see if there's an active game
+            - Only after confirming an active game exists, use the letter_guesser_agent to process the guess
+            - If sync_agent indicates no active game, offer to start a new one
+
         After each letter:
             - Confirm to the user what they proposed.
             - Update the game state.
@@ -169,26 +258,45 @@ agent = Agent(
             tool_name = "game_restarter_agent",
             tool_description = "Restarts a new game.",
         ),
+        sync_agent.as_tool(
+            tool_name = "sync_agent",
+            tool_description = "Syncs with an active game if one exists.",
+        ),
     ]
 )
 
 async def main():
-    inputs: list[TResponseInputItem] = []
+    inputs: List[TResponseInputItem] = []
     conversation_id = str(uuid.uuid4().hex[:16])
 
     while True:
-        user_input = input("User: ")
-        inputs.append({"content": user_input, "role": "user"})
+        try:
+            user_input = input("User: ")
+            inputs.append({"content": user_input, "role": "user"})
 
-        with trace("Game Agent", group_id=conversation_id):
-            result = await Runner.run(agent, input=inputs)
+            print(f"===AGENT RUNNER=== Running agent with inputs, conversation ID: {conversation_id}")
+            
+            with trace("Game Agent", group_id=conversation_id):
+                result = await Runner.run(agent, input=inputs)
 
-            for item in result.new_items:
-                if isinstance(item, MessageOutputItem):
-                    text = ItemHelpers.text_message_output(item)
-                    if text:
-                        print(f"Bot: {text}")
-        inputs = result.to_input_list()
+                for item in result.new_items:
+                    if isinstance(item, MessageOutputItem):
+                        text = ItemHelpers.text_message_output(item)
+                        if text:
+                            print(f"Bot: {text}")
+                            
+                            # After each agent response, check game state
+                            current_state = get_current_state()
+                            if current_state and manager.current_game:
+                                print(f"===AGENT RUNNER=== Current game state: word={manager.current_game.secret_word}, display={current_state.display_word}")
+            
+            # Update inputs for the next conversation turn
+            inputs = result.to_input_list()
+        except Exception as e:
+            print(f"===AGENT RUNNER=== Error in main loop: {str(e)}")
+            # Continue the conversation even after an error
+            if not inputs:
+                inputs = [{"content": "Hello", "role": "user"}]
             
 
 if __name__ == "__main__":
