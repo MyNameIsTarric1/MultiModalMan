@@ -5,3 +5,6 @@ opencv-python
 SpeechRecognition
 pyaudio
 openai-agents
+Pillow
+mediapipe
+python-dotenv
