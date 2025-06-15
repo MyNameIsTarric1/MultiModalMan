@@ -1,0 +1,19 @@
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000'}}}%%
+sequenceDiagram
+    participant U as 👤 User
+    participant UI as 🖥️ Frontend
+    participant CV as 👁️ Computer Vision
+    participant AI as 🤖 AI Agent
+    participant GM as 🎯 Game Manager
+    
+    U->>UI: Draws letter with hand
+    UI->>CV: Capture hand gesture
+    CV->>CV: Process with MediaPipe
+    CV->>CV: Recognize letter (TensorFlow)
+    CV->>UI: Return predicted letter
+    UI->>AI: Send letter guess
+    AI->>GM: Update game state
+    GM->>GM: Check game rules
+    GM->>AI: Return game status
+    AI->>UI: Send response
+    UI->>U: Display result
