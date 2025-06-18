@@ -1,0 +1,12 @@
+%%{init: {"themeVariables": {"fontSize": "12px"}}}%%
+sequenceDiagram
+participant User
+participant VoiceRec as VoiceRec
+participant Agent as OpenAI
+participant StateMgr as StateMgr
+participant GUI
+User->>VoiceRec: "I want to guess the C"
+VoiceRec->>Agent: Transcript
+Agent->>StateMgr: {guess_letter, "C"}
+StateMgr->>GUI: Update state
+GUI-->>User: Feedback

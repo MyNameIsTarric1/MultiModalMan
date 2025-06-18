@@ -1,0 +1,18 @@
+%%{init: {"state": {"fill": "#f9f, #ccf"}, "themeVariables": {"fontSize": "10px"}}}%%
+stateDiagram-v2
+    direction TB
+    [*] --> Idle: Start
+    Idle --> Input: New
+    Input --> Check: Guess
+    Check --> Input: Valid
+    Check --> Win: Win
+    Check --> Lose: Lose
+    Win --> Idle: New
+    Lose --> Idle: New
+    Input --> Reveal: Reveal
+    Reveal --> Idle: New
+    %% Notes for vertical compactness
+    note right of Idle: Ready
+    note right of Input: Await
+    note right of Check: Eval
+    note right of Reveal: Gave up
