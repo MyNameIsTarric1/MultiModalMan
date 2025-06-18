@@ -1,0 +1,62 @@
+%%{init: {"flowchart": {"curve": "basis"}} }%%
+flowchart LR
+    %% User
+    User["User"]
+    
+    %% Input Methods - Compact
+    subgraph Inputs ["📥 Inputs"]
+        Voice["Voice"]
+        Text["Text"] 
+        Gesture["Gestures"]
+    end
+    
+    %% Core Application - Compact
+    subgraph App ["🎯 Application"]
+        UI["UI (Flet)"]
+        StateManager["State Manager"]
+        Agent["AI Agent"]
+    end
+    
+    %% Processing - Compact
+    subgraph Processing ["⚙️ Processing"]
+        Speech["Speech Recognition"]
+        Vision["Computer Vision"]
+    end
+    
+    %% External - Compact
+    subgraph External ["☁️ External"]
+        OpenAI["OpenAI API"]
+        Libraries["ML Libraries"]
+    end
+    
+    %% Simplified Data Flow
+    User --> Inputs
+    Voice -.-> Speech
+    Gesture -.-> Vision
+    Text --> Agent
+    Speech --> Agent
+    Vision --> Agent
+    Agent --> StateManager
+    StateManager --> UI
+    Agent -.-> OpenAI
+    Speech -.-> Libraries
+    Vision -.-> Libraries
+    UI --> User
+    
+    %% Compact Styling
+    classDef userStyle fill:#f0f8ff,stroke:#4682b4,stroke-width:2px,color:#2c3e50,font-weight:bold
+    classDef componentStyle fill:#ffffff,stroke:#666666,stroke-width:1px,color:#333333
+    
+    %% Compact Layer Groups
+    classDef inputLayerStyle fill:#f8f0ff,stroke:#ddd,stroke-width:1px,rx:10,ry:10
+    classDef appLayerStyle fill:#f0fff8,stroke:#ddd,stroke-width:1px,rx:10,ry:10
+    classDef processLayerStyle fill:#fff8f0,stroke:#ddd,stroke-width:1px,rx:10,ry:10
+    classDef externalLayerStyle fill:#fff0f8,stroke:#ddd,stroke-width:1px,rx:10,ry:10
+    
+    %% Apply Styles
+    class User userStyle
+    class Voice,Text,Gesture,UI,StateManager,Agent,Speech,Vision,OpenAI,Libraries componentStyle
+    class Inputs inputLayerStyle
+    class App appLayerStyle
+    class Processing processLayerStyle
+    class External externalLayerStyle
