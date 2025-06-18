@@ -1,0 +1,36 @@
+\section{System Architecture}
+The architecture is designed to be cross-platform and independent of the development environment, allowing it to run on Windows, Linux, and macOS systems, provided that a standard webcam and microphone are available.
+
+\subsection{Package Structure}
+
+The application \textit{Hangman 2.0} is designed with a modular architecture, where each package serves a specific and well-defined role within the system. This approach promotes separation of concerns, simplifies code maintenance, and allows for independent development and testing of different functionalities.
+
+At the core of the architecture lies the \texttt{game\_logic} package, which encapsulates the game's main logic: managing the target word, evaluating guesses, tracking errors, and determining win or loss conditions. The \texttt{user\_interface} package is responsible for rendering and updating the graphical user interface, while dynamically reflecting the game state.
+
+The system supports multimodal interaction through two dedicated packages. The \texttt{input\_voice} package handles voice-based input acquisition and processing, leveraging speech recognition technologies. The \texttt{input\_gesture} package manages hand-drawn input captured via webcam and processed through computer vision techniques and a CNN-based classifier.
+
+Lastly, the \texttt{utils} package offers shared support utilities such as logging mechanisms, configuration file handlers, and global constants. This clear packaging strategy enhances modularity and facilitates future scalability.
+
+\subsection{Main Packages Details}
+
+\subsubsection{\texttt{game\_logic}}
+This package forms the heart of the application. It includes the \texttt{GameManager} class, which is responsible for the complete management of the hangman game state. It randomly selects a word from a predefined list, keeps track of correct and incorrect guesses, and determines when the game ends.
+
+The class exposes a simple interface to the rest of the system, providing methods such as \texttt{guess\_letter(letter)}, \texttt{is\_game\_over()}, and \texttt{get\_display\_word()} for game interaction. All game-related decision making is centralized in this package.
+
+\subsubsection{\texttt{user\_interface}}
+The \texttt{user\_interface} package is tasked with constructing and updating the graphical layout of the application. Depending on the system version, the interface can be implemented using libraries such as \texttt{flet}, \texttt{tkinter}, or \texttt{pygame}. The core class, \texttt{UIManager}, handles the rendering of the current word state, the display of incorrect letters, and the remaining attempts.
+
+It also provides immediate visual feedback to the user's input through animations, color changes, and on-screen messages. Furthermore, it integrates the inputs from various modalities (voice, gesture, keyboard) to ensure a cohesive user experience.
+
+\subsubsection{\texttt{input\_voice}}
+This package manages voice-based interaction. Utilizing the \texttt{speech\_recognition} library, it supports multiple backends such as Google Speech API, Whisper, or offline engines. The \texttt{SpeechRecognizer} class handles the acquisition of audio input, the filtering of noise, the transcription of letters, and the resolution of ambiguities.
+
+The module exposes methods such as \texttt{listen\_for\_letter()} and \texttt{get\_last\_result()} to other components, allowing seamless integration into the game loop. Error handling, silence timeouts, and recognition confidence thresholds are incorporated to ensure robustness.
+
+\subsubsection{\texttt{input\_gesture}}
+The \texttt{input\_gesture} package enables gesture-based input using computer vision. Through \texttt{OpenCV} and a trained Convolutional Neural Network (CNN), the system recognizes letters drawn in the air by the user's hand.
+
+The \texttt{GestureRecognizer} class is responsible for capturing video frames, applying image preprocessing (such as filtering, detection of the bounding box, and resizing), and performing inference using CNN. It returns the most probable letter detected. The main method, \texttt{capture\_and\_predict()}, encapsulates this entire workflow.
+
+This component is modular and extendable, capable of being re-trained with new datasets or adapted to improved neural architectures for higher accuracy.

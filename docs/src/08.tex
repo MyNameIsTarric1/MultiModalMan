@@ -1,0 +1,55 @@
+\section{Multimodal Interaction}
+Multimodal interaction is the innovative heart of the L-impiccato2.0 project. The objective is to enable the user to communicate with the system using alternative channels to traditional keyboard or mouse interaction, in particular:
+\begin{itemize}
+    \item the voice, through voice commands which are transcribed and interpreted;
+    \item gestures, via a webcam that captures the letters drawn with fingers;
+    \item Intelligent management of the context and state of the game, coordinated by an OpenAI-based cognitive agent.
+\end{itemize}
+
+\subsection{Supported interaction mode}
+\subsubsection{Vocal interaction}
+The user can propose letters or give voice commands ("start game", "repeat", "exit") using the microphone. The audio is transcribed in real time by a speech recognition module based on speech\_recognition, with fallback to alternative engines (such as Whisper or Google API).
+The resulting text is forwarded to the state manager, who evaluates its meaning according to the current state of the game (e.g. waiting for input, end of game, initial setup).
+\subsubsection{Gesture interaction}
+The webcam captures the scene and the system detects the hand gesture. A preprocessing pipeline (OpenCV) isolates the region of interest, normalizes it and passes it to a CNN model (trained ad hoc) for letter classification. Also in this case, the result is transmitted to the state manager, who decides whether to interpret the gesture as a valid input and how to react (acceptance, error, visual feedback).
+
+\subsection{State Manager}
+The state manager is the logical core of the application. It functions as a centralized orchestrator that keeps track of the current state of the system and decides how to handle inputs from different modes.\\\\
+Main Features:
+\begin{itemize}
+    \item Game status management: setup, waiting input, verification, end of game.
+    \item Coordination between voice and gesture inputs: filters, Normalizes and interprets data.
+    \item Conflict prevention: prevents simultaneous or ambiguous inputs from being handled inconsistently.
+    \item Contextual dialogue: depending on the current phase, it accepts only certain types of commands (e.g. "new game" accepted only at the end of the game).
+\end{itemize}
+
+Architecture:
+\begin{itemize}
+    \item Implemented as GameStateManager class
+    \item Contains a finite state defined by events (start, input, confirmation, error, end)
+    \item Publish handle\_voice\_input(text) and handle\_gesture(letter) methods
+    \item Communicate with UIManager, GameManager and OpenAIAgent
+\end{itemize}
+
+\subsection{The OpenAI Agent}
+One of the most innovative elements of the project is the integration of an intelligent agent based on OpenAI, which acts as a cognitive interpreter of inputs and a dialogic manager.\\\\
+Role of the agent:
+\begin{itemize}
+    \item Natural understanding: translates voice or text input into contextual commands ("I want to play", "tell me the rules", "how many letters did I get wrong?").
+    \item Context-based decisions: tracks the internal state of the game and selects the most suitable action.
+    \item Dynamic feedback: produces personalized messages consistent with the flow of the game.
+    \item Intelligent routing: route the flow to the correct module (game logic, UI, voice response).
+\end{itemize}
+
+Example:
+\begin{enumerate}
+    \item The user says: "I want to guess the C"
+    \item The voice module transcribes: "I want to guess the C"
+    \item The OpenAI agent receives input and returns: \{"action": "guess\_letter", "value": "C"\}
+    \item The state manager executes guess\_letter("C") and updates the interface
+\end{enumerate}
+
+
+
+
+

@@ -1,0 +1,30 @@
+\section{GUI Implementation}
+\subsection{Abstract Interface}
+The abstract interface defines the logical arrangement of graphic elements and functional areas, regardless of visual style or specific implementation. In the design phase, a simple and familiar layout was chosen, focusing on the following areas:
+\begin{itemize}
+    \item Main area of the word: in the middle of the screen, show the word to be guessed with the letters exposed or masked (\_).
+    \item Error area: placed sideways or at the bottom, it displays the wrong letters and the number of remaining attempts.
+    \item Status messages: a textual or visual area for feedback such as "Correct letter", "You won", etc.
+    \item Game controls: buttons to start new game, choose input mode or exit.
+    \item Active input indicator: shows whether speech, gesture or other recognition is active.
+\end{itemize}
+
+\subsection{Concrete Interface}
+The concrete interface represents the graphical realisation of the abstract interface using the chosen library (in this project Flet, or Tkinter in alternative versions). The elements are stylised to appear:
+\begin{itemize}
+    \item Responsive: they adapt to different resolutions and windows.
+    \item Clear and readable: use of large fonts, contrasting colours and intuitive symbols.
+    \item Animated (optional): for positive/negative feedback via transitions, sounds or animations.
+\end{itemize}
+
+\subsection{Implementation}
+Each section of the GUI is managed as a separate module, so as to favour readability and maintainability of the code.
+Main technical aspects:
+\begin{itemize}
+    \item Component organisation: each area (word status, input, controls) is a function or Flet class.
+    \item Event handling: the interface reacts in real time to input (click, sound, gesture) with on\_click, on\_change, etc.
+    \item Communication between modules: voice/gesture managed inputs update the GUI status via shared functions or central controller.
+    \item Visual and auditory feedback: implemented through dynamic updating of widgets, colours and sounds.
+\end{itemize}
+
+
