@@ -1,0 +1,55 @@
+\documentclass[nonacm,sigplan]{acmart}
+\settopmatter{printacmref=false}
+
+% Import packages
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+
+\begin{document}
+\title[]{MultiModalMan: An Interactive Hangman Game}
+
+\author{Andrea Tarricone}
+\email{tarricone.1888181@studenti.uniroma1.it}
+\affiliation{%
+  \institution{University "La Sapienza"}
+  \city{Rome}
+  \state{Lazio}
+  \country{Italy}
+}
+
+\author{Lucian Dorin Crainic}
+\email{crainic.1938430@studenti.uniroma1.it}
+\affiliation{
+  \institution{University "La Sapienza"}
+  \city{Rome}
+  \state{Lazio}
+  \country{Italy}
+}
+
+\begin{abstract}
+\textbf{MultiModalMan} is a re-imagining of the classic hangman game that lets players guess letters and control the interface by speaking or using hand gestures as well as by typing. The system is built in Python around three modules: a state manager that synchronises all inputs, an AI agent for natural-language processing, and a computer-vision pipeline for real-time gesture recognition. Users can switch freely between modalities during play, and tests show the approach improves accessibility and user satisfaction without sacrificing speed or accuracy. Future work will explore multilingual vocabularies, spoken feedback, and cooperative multiplayer play.
+\end{abstract}
+
+
+\begin{teaserfigure}
+  \includegraphics[width=\textwidth]{./images/architecture_diagram.png}
+  \caption{High-level overview of the multimodal hangman game system showing the flow from user inputs through processing layers to the core application.}
+  \label{fig:teaser}
+\end{teaserfigure}
+
+\maketitle
+\pagestyle{plain}
+\input{src/01.tex}
+\input{src/02.tex}
+\input{src/03.tex}
+\input{src/04.tex}
+% \input{src/05.tex}
+% \input{src/06.tex}
+% \input{src/07.tex}
+% \input{src/08.tex}
+% \input{src/09.tex}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+\end{document}
