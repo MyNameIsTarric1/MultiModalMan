@@ -1,30 +1,124 @@
 \section{GUI Implementation}
-\subsection{Abstract Interface}
-The abstract interface defines the logical arrangement of graphic elements and functional areas, regardless of visual style or specific implementation. In the design phase, a simple and familiar layout was chosen, focusing on the following areas:
+
+\subsection*{Application Architecture}
+
+The GUI is built using the Flet framework, creating a responsive web based interface that runs in the browser. The application follows a two panel layout design where the main game display occupies the left panel and the multimodal input controls are positioned on the right panel.
+
+To launch the application, use the following command from the project root:
+
+\begin{lstlisting}[caption={Starting the Frontend Application}]
+flet run frontend/main.py --web
+\end{lstlisting}
+
+This opens the game in the default web browser as a responsive web application.
+
+\subsection*{Main Components}
+
+The interface is organized into modular components, each handling specific aspects of the game:
+
+\begin{center}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Component} & \textbf{Responsibility} \\ \midrule
+\texttt{GamePanel}        & Main game interface with word display, hangman visual, and control buttons. \\
+\texttt{GameDisplay}      & Shows current word state, guessed letters, remaining attempts, and game status. \\
+\texttt{HangmanVisual}    & Animated hangman drawing that progresses with wrong guesses (7 states). \\
+\texttt{MediaControls}    & Tabbed interface for voice input, hand drawing, and AI agent chat. \\
+\texttt{ManualInput}      & Text input field for manual letter guessing with validation. \\
+\texttt{AppLayout}        & Responsive layout manager handling window resizing and notifications. \\ \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Game Panel Layout}
+
+The left panel contains the core game interface:
+
 \begin{itemize}
-    \item Main area of the word: in the middle of the screen, show the word to be guessed with the letters exposed or masked (\_).
-    \item Error area: placed sideways or at the bottom, it displays the wrong letters and the number of remaining attempts.
-    \item Status messages: a textual or visual area for feedback such as "Correct letter", "You won", etc.
-    \item Game controls: buttons to start new game, choose input mode or exit.
-    \item Active input indicator: shows whether speech, gesture or other recognition is active.
+\item \textbf{Control Buttons}: Three action buttons for starting new games, resetting, and revealing words
+\item \textbf{Word Display}: Shows the target word with revealed letters or underscores for hidden letters
+\item \textbf{Game Information}: Displays guessed letters, remaining attempts, and current game status
+\item \textbf{Hangman Visual}: Animated SVG style drawing showing game progress (0-6 wrong guesses)
+\item \textbf{Manual Input}: Text field for direct letter input with real time validation
 \end{itemize}
 
-\subsection{Concrete Interface}
-The concrete interface represents the graphical realisation of the abstract interface using the chosen library (in this project Flet, or Tkinter in alternative versions). The elements are stylised to appear:
-\begin{itemize}
-    \item Responsive: they adapt to different resolutions and windows.
-    \item Clear and readable: use of large fonts, contrasting colours and intuitive symbols.
-    \item Animated (optional): for positive/negative feedback via transitions, sounds or animations.
-\end{itemize}
+\subsection*{Multimodal Input Interface}
 
-\subsection{Implementation}
-Each section of the GUI is managed as a separate module, so as to favour readability and maintainability of the code.
-Main technical aspects:
-\begin{itemize}
-    \item Component organisation: each area (word status, input, controls) is a function or Flet class.
-    \item Event handling: the interface reacts in real time to input (click, sound, gesture) with on\_click, on\_change, etc.
-    \item Communication between modules: voice/gesture managed inputs update the GUI status via shared functions or central controller.
-    \item Visual and auditory feedback: implemented through dynamic updating of widgets, colours and sounds.
-\end{itemize}
+The right panel provides three input modalities through a tabbed navigation interface:
 
+\begin{description}
+\item[\textbf{Agent Chat}] Natural language conversation with an AI agent that manages the game, processes letter guesses, and provides guidance. Includes voice to text capability for hands free interaction.
 
+\item[\textbf{Voice Input}] Direct voice recognition for letter guessing. Users say "Letter X" to guess a specific letter, with visual feedback showing the recognized input and confidence levels.
+
+\item[\textbf{Hand Drawing}] Computer vision based letter recognition using webcam input. Users draw letters in the air, which are captured, processed through a CNN model, and converted to game guesses.
+\end{description}
+
+\subsection*{State Management and Observer Pattern}
+
+The application uses a centralized state management system with an observer pattern for real-time UI updates:
+
+\begin{lstlisting}[style=pystyle, caption={Observer Pattern Implementation}]
+class GameStateManager:
+    def add_observer(self, callback: Callable[[GameState], None]) -> None:
+        """Add a callback function to be called when game state changes"""
+        if callback not in self._observers:
+            self._observers.append(callback)
+    
+    def _notify_observers(self, state: GameState) -> None:
+        """Notify all observers of a state change"""
+        for callback in self._observers:
+            callback(state)
+
+# Components register as observers
+self.state_manager.add_observer(self.on_state_changed)
+\end{lstlisting}
+
+This ensures that all UI components automatically update when the game state changes, whether triggered by manual input, voice commands, hand gestures, or AI agent actions.
+
+\subsection*{Component Implementation Details}
+
+\subsubsection*{GameDisplay Component}
+
+The \texttt{GameDisplay} component handles the visual representation of the current game state:
+
+\begin{lstlisting}[style=pystyle, caption={GameDisplay Update Logic}]
+def update(self, state):
+    # Handle revealed word display
+    if state.game_status == "revealed" and state.secret_word:
+        self.word.value = " ".join(state.secret_word)
+        self.word.color = config.COLOR_PALETTE["error"]
+    else:
+        self.word.value = state.display_word
+        self.word.color = None
+    self._update_status(state)
+\end{lstlisting}
+
+\subsubsection*{HangmanVisual Component}
+
+The hangman visual progresses through seven distinct states, from an empty gallows to a complete figure:
+
+\begin{lstlisting}[style=pystyle, caption={Hangman Visual State Management}]
+def update_state(self, wrong_guesses):
+    """Update the hangman visual based on number of wrong guesses"""
+    wrong_guesses = max(0, min(wrong_guesses, 6))
+    self.current_state = wrong_guesses
+    self.content = self.states[wrong_guesses]
+    self.update()
+\end{lstlisting}
+
+\subsubsection*{MediaControls Navigation}
+
+The multimodal interface uses a navigation bar to switch between input methods:
+
+\begin{lstlisting}[style=pystyle, caption={Multimodal Interface Navigation}]
+def _handle_tab_change(self, e):
+    """Handle navigation rail tab change"""
+    selected_index = e.control.selected_index
+    if selected_index == 0:  # Chat
+        self.view_container.content = self.chat_view
+    elif selected_index == 1:  # Voice
+        self.view_container.content = self.voice_view  
+    elif selected_index == 2:  # Drawing
+        self.view_container.content = self.drawing_view
+    self.view_container.update()
+\end{lstlisting}
