@@ -1,7 +1,5 @@
 \documentclass[nonacm,sigplan]{acmart}
 \settopmatter{printacmref=false}
-
-% Import packages
 \usepackage{enumitem}
 \usepackage{tabularx}
 \usepackage{xcolor}
@@ -30,7 +28,6 @@
 
 \lstdefinestyle{pystyle}{
   language     = Python,
-  backgroundcolor=\color{codebg},
   basicstyle   = \ttfamily\footnotesize,
   keywordstyle = \color{codekw}\bfseries,
   stringstyle  = \color{codestr},
@@ -41,7 +38,6 @@
   framerule    = 0pt,
   rulecolor    = \color{black!15},
 }
-
 
 \begin{document}
 \title[]{MultiModalMan: An Interactive Hangman Game}
@@ -65,25 +61,24 @@
 }
 
 \begin{abstract}
-\textbf{MultiModalMan} is a re-imagining of the classic hangman game that lets players guess letters and control the interface by speaking or using hand gestures as well as by typing. The system is built in Python around three modules: a state manager that synchronises all inputs, an AI agent for natural-language processing, and a computer-vision pipeline for real-time gesture recognition. Users can switch freely between modalities during play, and tests show the approach improves accessibility and user satisfaction without sacrificing speed or accuracy. Future work will explore multilingual vocabularies, spoken feedback, and cooperative multiplayer play.
+\textbf{MultiModalMan} is a reimagining of the classic \textit{hangman game} that lets players guess letters and control the interface by speaking or using hand gestures as well as by typing. The system is built in \textit{Python} around three modules: a state manager that synchronises all inputs, an \textbf{AI agent} for \textit{natural language processing}, and a \textit{Computer Vision pipeline} for \textit{real time gesture recognition}. Users can switch freely between modalities during play, making the game accessible and engaging for a wide audience. The application is implemented using the \textit{Flet} framework, which provides a responsive web interface that runs in any modern browser. This paper describes the architecture, design patterns, and implementation details of the system, highlighting its innovative use of multimodal interaction to enhance user experience.
 \end{abstract}
 
 
 \begin{teaserfigure}
   \includegraphics[width=\textwidth]{./images/architecture_diagram.png}
-  \caption{High-level overview of the multimodal hangman game system showing the flow from user inputs through processing layers to the core application.}
-  \label{fig:teaser}
+  \caption{High level overview of the MultiModalMan game system showing the flow from user inputs through processing layers to the core application.}
 \end{teaserfigure}
 
 \maketitle
 \pagestyle{plain}
+
 \input{src/01.tex}
-\input{src/02.tex}
 \input{src/03.tex}
 \input{src/04.tex}
-% \input{src/05.tex}
-% \input{src/06.tex}
-% \input{src/07.tex}
+\input{src/05.tex}
+\input{src/06.tex}
+\input{src/07.tex}
 \input{src/08.tex}
 \input{src/09.tex}
 
