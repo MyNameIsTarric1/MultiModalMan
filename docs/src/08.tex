@@ -1,55 +1,63 @@
 \section{Multimodal Interaction}
-Multimodal interaction is the innovative heart of the L-impiccato2.0 project. The objective is to enable the user to communicate with the system using alternative channels to traditional keyboard or mouse interaction, in particular:
-\begin{itemize}
-    \item the voice, through voice commands which are transcribed and interpreted;
-    \item gestures, via a webcam that captures the letters drawn with fingers;
-    \item Intelligent management of the context and state of the game, coordinated by an OpenAI-based cognitive agent.
-\end{itemize}
 
-\subsection{Supported interaction mode}
-\subsubsection{Vocal interaction}
-The user can propose letters or give voice commands ("start game", "repeat", "exit") using the microphone. The audio is transcribed in real time by a speech recognition module based on speech\_recognition, with fallback to alternative engines (such as Whisper or Google API).
-The resulting text is forwarded to the state manager, who evaluates its meaning according to the current state of the game (e.g. waiting for input, end of game, initial setup).
-\subsubsection{Gesture interaction}
-The webcam captures the scene and the system detects the hand gesture. A preprocessing pipeline (OpenCV) isolates the region of interest, normalizes it and passes it to a CNN model (trained ad hoc) for letter classification. Also in this case, the result is transmitted to the state manager, who decides whether to interpret the gesture as a valid input and how to react (acceptance, error, visual feedback).
+Multimodal interaction is the cornerstone of \textit{MultiModalMan}.  
+Instead of locking players into a keyboard‐and‐mouse loop, the game accepts spoken commands, hand-drawn letters captured by a webcam, and classic text input.  
+A Python state manager keeps these channels in sync, while an OpenAI-powered agent interprets free-form utterances and adapts feedback to the current game phase.
+
+\subsection{Voice Interaction}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{./images/voice_interaction_flow.png}
+    \caption{State machine diagram for the \texttt{GameStateManager} class, showing the transitions between different game states based on user inputs and actions.}
+    \label{fig:state_machine}
+\end{figure}
+When the user speaks—“start game”, “guess C”, or “exit” for instance—the audio stream is transcribed in real time (primary engine: \texttt{speech\_recognition}; fallback: Whisper or the Google Speech API).  
+The recognised text is passed to the state manager, which checks whether the utterance is valid for the current state (setup, guessing, or end-of-game) and routes it accordingly.  
+Natural phrases such as “how many errors do I have?” are interpreted by the OpenAI agent, which converts them into concrete game actions or informational responses.
+
+\subsection{Gesture Interaction}
+
+A webcam continuously detects the user’s hand.  
+OpenCV isolates the region of interest, normalises it, and forwards the image to a lightweight CNN trained on finger-spelled letters.  
+The predicted character is then forwarded to the state manager, which decides whether to accept, reject, or request clarification—always providing on-screen feedback so users understand what was recognised.
 
 \subsection{State Manager}
-The state manager is the logical core of the application. It functions as a centralized orchestrator that keeps track of the current state of the system and decides how to handle inputs from different modes.\\\\
-Main Features:
-\begin{itemize}
-    \item Game status management: setup, waiting input, verification, end of game.
-    \item Coordination between voice and gesture inputs: filters, Normalizes and interprets data.
-    \item Conflict prevention: prevents simultaneous or ambiguous inputs from being handled inconsistently.
-    \item Contextual dialogue: depending on the current phase, it accepts only certain types of commands (e.g. "new game" accepted only at the end of the game).
-\end{itemize}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{./images/game_state_manager_state_machine.png}
+    \caption{State machine diagram for the \texttt{GameStateManager} class, showing the transitions between different game states based on user inputs and actions.}
+    \label{fig:state_machine}
+\end{figure}
+The \texttt{GameStateManager} class acts as the game’s traffic controller.  
+It tracks a finite set of states (initialisation, waiting for input, verifying, end of game) and exposes two public methods—\texttt{handle\_voice\_input()} and \texttt{handle\_gesture()}.  
+Because every modality funnels through this single point, conflicts are resolved centrally: if a gesture and a voice command arrive at the same instant, the manager applies simple time-stamping to decide which one to honour first.  
+It also filters commands that make sense only in a given phase (e.g., “new game” is accepted only after a round has finished).
 
-Architecture:
-\begin{itemize}
-    \item Implemented as GameStateManager class
-    \item Contains a finite state defined by events (start, input, confirmation, error, end)
-    \item Publish handle\_voice\_input(text) and handle\_gesture(letter) methods
-    \item Communicate with UIManager, GameManager and OpenAIAgent
-\end{itemize}
+\subsection{OpenAI Agent}
 
-\subsection{The OpenAI Agent}
-One of the most innovative elements of the project is the integration of an intelligent agent based on OpenAI, which acts as a cognitive interpreter of inputs and a dialogic manager.\\\\
-Role of the agent:
-\begin{itemize}
-    \item Natural understanding: translates voice or text input into contextual commands ("I want to play", "tell me the rules", "how many letters did I get wrong?").
-    \item Context-based decisions: tracks the internal state of the game and selects the most suitable action.
-    \item Dynamic feedback: produces personalized messages consistent with the flow of the game.
-    \item Intelligent routing: route the flow to the correct module (game logic, UI, voice response).
-\end{itemize}
+The agent turns raw language into game intents.  
+It maintains short-term context—current word, remaining attempts, last hint delivered—so that a query like “remind me what I’ve tried” produces a targeted answer.  
+Outputs are JSON objects containing an \texttt{action} field (e.g.\ \texttt{"guess\_letter"}) and an optional \texttt{value}.  
+This structure lets the state manager treat the agent as just another input device, keeping the architecture loosely coupled.
 
-Example:
-\begin{enumerate}
-    \item The user says: "I want to guess the C"
-    \item The voice module transcribes: "I want to guess the C"
-    \item The OpenAI agent receives input and returns: \{"action": "guess\_letter", "value": "C"\}
-    \item The state manager executes guess\_letter("C") and updates the interface
-\end{enumerate}
+The agent that interprets free-form utterances is created once at start-up.
+For security, the OpenAI key is injected via the \texttt{OPENAI\_API\_KEY} environment
+variable (e.g.\ \texttt{export OPENAI\_API\_KEY=\,$\langle$key$\rangle$} on Unix).
 
+\begin{lstlisting}[style=pystyle,
+                   caption={Essential agent scaffold},
+                   label={lst:agent}]
+# expects OPENAI_API_KEY to be set in the shell
 
-
-
-
+agent = Agent(
+    name="hangman_game_agent",
+    instructions="""High-level rules and prompts (truncated for brevity)""",
+    tools=[
+        ("welcome_agent", "Greets and explains rules"),
+        ("wordsetter_agent", "Chooses the word"),
+        ("letter_guesser_agent", "Processes a letter guess"),
+        ("game_restarter_agent", "Starts a new round"),
+        ("sync_agent", "Checks active game state"),
+    ],
+)
+\end{lstlisting}

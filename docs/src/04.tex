@@ -1,11 +1,7 @@
 \section{Requirements}
-
-\subsection{Overview}
-The following tables specify the essential capabilities (\textit{Functional}) and quality targets (\textit{Non-Functional}) that \textit{MultiModalMan} must meet to deliver an inclusive, responsive and maintainable gaming experience.
+The following tables specify the essential capabilities (\textit{Functional}) and quality targets (\textit{Non-Functional}) that \textit{MultiModalMan} must meet to deliver an inclusive, responsive and maintainable experience.
 
 % --------------------------------------------------
-\subsection{Functional Requirements}
-
 \begin{table}[h]
 \centering
 \caption{Functional requirements}
@@ -13,7 +9,7 @@ The following tables specify the essential capabilities (\textit{Functional}) an
 \toprule
 \textbf{ID} & \textbf{Description} \\ \midrule
 F1 & The user can start a new game at any time. \\
-F2 & The system selects a random word from an internal dictionary. \\
+F2 & The system selects a random word or User suggests a word to the AI agent. \\
 F3 & Letters can be guessed through voice commands, hand gestures or keyboard input. \\
 F4 & The interface shows the current word state and the number of wrong attempts. \\
 F5 & The system announces the outcome (win or loss) when the game ends. \\
@@ -22,8 +18,6 @@ F6 & A new round can be launched without restarting the application. \\ \bottomr
 \end{table}
 
 % --------------------------------------------------
-\subsection{Non-Functional Requirements}
-
 \begin{table}[h]
 \centering
 \caption{Non-functional requirements}
@@ -31,10 +25,7 @@ F6 & A new round can be launched without restarting the application. \\ \bottomr
 \toprule
 \textbf{ID} & \textbf{Description} \\ \midrule
 NF1 & The user interface must be clear and readable for all age groups. \\
-NF2 & The game runs on Windows, macOS and Linux with a standard webcam and microphone. \\
-NF3 & Average recognition latency for voice or gesture input is \(\leq\) 2 s. \\
-NF4 & Gesture recognition covers the full 26-letter English alphabet\footnote{Or 21 letters for Italian; adjust to the target language set.}. \\
-NF5 & The code base is modular and documented to support future extensions. \\
-NF6 & The game logic remains consistent when inputs are invalid or ambiguous. \\ \bottomrule
+NF2 & Gesture recognition covers the full 26-letter English alphabet \\
+NF3 & The game logic remains consistent when inputs are invalid or ambiguous. \\ \bottomrule
 \end{tabularx}
 \end{table}
