@@ -7,11 +7,15 @@ Multimodal interaction is the cornerstone of \textbf{MultiModalMan}. Instead of 
     \centering
     \includegraphics[width=0.55\textwidth]{./images/voice_interaction_flow.png}
     \caption{Activity diagram for the voice interaction component, showing how user speech is processed, transcribed, and routed through the state manager to update the game state.}
-    \label{fig:state_machine}
 \end{figure}
 When the user speaks “start game”, “guess C”, or “exit” for instance the audio stream is transcribed in real time (primary engine: \texttt{speech\_recognition}; fallback: Whisper or the Google Speech API). The recognised text is passed to the state manager, which checks whether the utterance is valid for the current state (setup, guessing, or end of game) and routes it accordingly. Natural phrases such as “how many errors do I have?” are interpreted by the OpenAI agent, which converts them into concrete game actions or informational responses.
 
 \subsection*{Gesture Interaction}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.55\textwidth]{./images/hand-draw.png}
+    \caption{Gesture Interaction in the MultiModalMan game, showing how hand-drawn letters are captured and processed in real time.}
+\end{figure}
 A webcam continuously detects the user’s hand. OpenCV isolates the region of interest, normalises it, and forwards the image to a lightweight CNN trained on finger spelled letters. The predicted character is then forwarded to the state manager, which decides whether to accept, reject, or request clarification always providing on screen feedback so users understand what was recognised.
 
 \subsection*{State Manager}
@@ -46,3 +50,9 @@ agent = Agent(
     ],
 )
 \end{lstlisting}
+
+\begin{figure*}[t]
+  \center
+  \includegraphics[width=1\textwidth]{images/ui-view.png}
+  \caption{Screenshot of the MultiModalMan game interface showing the main game display, hangman visual, and the multimodal input tabs.}
+\end{figure*}
