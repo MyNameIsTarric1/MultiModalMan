@@ -4,7 +4,44 @@
 % Import packages
 \usepackage{enumitem}
 \usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{tabularx}
 \usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{listings}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=red,
+  filecolor=magenta,
+  urlcolor=cyan
+}
+\lstset{basicstyle=\ttfamily\footnotesize, breaklines=true}
+\definecolor{codebg}{gray}{0.97}
+\definecolor{codekw}{rgb}{0.10,0.35,0.70}
+\definecolor{codestr}{rgb}{0.60,0.00,0.00}
+\definecolor{codecom}{rgb}{0.30,0.50,0.30}
+
+\lstdefinestyle{pystyle}{
+  language     = Python,
+  backgroundcolor=\color{codebg},
+  basicstyle   = \ttfamily\footnotesize,
+  keywordstyle = \color{codekw}\bfseries,
+  stringstyle  = \color{codestr},
+  commentstyle = \color{codecom}\itshape,
+  showstringspaces = false,
+  breaklines   = true,
+  frame        = single,
+  framerule    = 0pt,
+  rulecolor    = \color{black!15},
+}
+
 
 \begin{document}
 \title[]{MultiModalMan: An Interactive Hangman Game}
@@ -47,8 +84,8 @@
 % \input{src/05.tex}
 % \input{src/06.tex}
 % \input{src/07.tex}
-% \input{src/08.tex}
-% \input{src/09.tex}
+\input{src/08.tex}
+\input{src/09.tex}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
