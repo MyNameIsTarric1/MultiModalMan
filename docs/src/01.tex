@@ -1,9 +1,9 @@
 \section{Introduction}
 Digital games have become a mainstream medium for both entertainment and learning, yet they remain unevenly playable. Industry reports estimate that \emph{20–30 \%} of the global player base lives with at least one disability, and almost half of those players already engage with games despite a range of access barriers \cite{ablegamers2024}. Ensuring that games are accessible is therefore both an ethical imperative and a clear educational and commercial opportunity.
 
-Research in multimodal human–computer interaction (HCI) shows that combining complementary input channels—speech, gesture, gaze, or haptics—lowers access barriers and improves task performance. A recent survey notes consistent reductions in error rate, task time, and cognitive load when users can blend modalities rather than rely on a single channel \cite{baig2020}. Game-specific studies echo these findings: gesture-based controllers enable players with motor impairments to execute directional actions that would be impossible on a traditional keyboard \cite{taheri2021}, and experiments that fuse voice commands with hand gestures yield the highest efficiency and perceived naturalness among the tested conditions \cite{cao2023}. Meanwhile, advances in AI speech processing continue to broaden accessibility by adapting to diverse accents and speech differences \cite{morris2019}.
+Research in multimodal human computer interaction (HCI) shows that combining complementary input channels speech, gesture, gaze, or haptics lowers access barriers and improves task performance. A recent survey notes consistent reductions in error rate, task time, and cognitive load when users can blend modalities rather than rely on a single channel \cite{baig2020}. Game specific studies echo these findings: gesture based controllers enable players with motor impairments to execute directional actions that would be impossible on a traditional keyboard \cite{taheri2021}, and experiments that fuse voice commands with hand gestures yield the highest efficiency and perceived naturalness among the tested conditions \cite{cao2023}. Meanwhile, advances in AI speech processing continue to broaden accessibility by adapting to diverse accents and speech differences \cite{morris2019}.
 
-\textbf{MultiModalMan} responds directly to this research agenda. The project re-imagines the classic Hangman game as a language-learning tool that can be played interchangeably through:
+\textbf{MultiModalMan} responds directly to this research agenda. The project reimagines the classic Hangman game as a language learning tool that can be played interchangeably through:
 
 \begin{itemize}
   \item spoken commands processed by an AI speech pipeline;
@@ -11,12 +11,9 @@ Research in multimodal human–computer interaction (HCI) shows that combining c
   \item conventional keyboard typing.
 \end{itemize}
 
-An embedded AI agent maintains the dialogue flow and adapts hints in real time, while a finite-state machine keeps all three modalities synchronised so players can switch fluidly between them without losing context. The project pursues three goals:
+An embedded AI agent maintains the dialogue flow and adapts hints in real time, while a finite state machine keeps all three modalities synchronised so players can switch fluidly between them without losing context. The project pursues the following goals:
 
 \begin{enumerate}
   \item demonstrate how a lightweight multimodal pipeline can be integrated into a small educational game;
   \item provide meaningful accessibility options for users with motor or speech restrictions;
-  \item offer a concrete test-bed for the design claims found in multimodal HCI literature.
 \end{enumerate}
-
-The remainder of this report details every phase of the project—from refined requirements to architecture, multimodal input handling, interface design, testing, and future work—so that our design decisions remain transparent and reusable.
