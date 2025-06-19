@@ -1,36 +1,93 @@
 \section{System Architecture}
-The architecture is designed to be cross-platform and independent of the development environment, allowing it to run on Windows, Linux, and macOS systems, provided that a standard webcam and microphone are available.
 
-\subsection{Package Structure}
+\textbf{MultiModalMan} is implemented as a web application using Python and the Flet framework. The architecture is designed to run on Windows, Linux, and macOS systems, requiring only a standard webcam and microphone for full multimodal functionality.
 
-The application \textit{Hangman 2.0} is designed with a modular architecture, where each package serves a specific and well-defined role within the system. This approach promotes separation of concerns, simplifies code maintenance, and allows for independent development and testing of different functionalities.
+\subsection*{High Level Architecture}
+The system follows a layered architecture pattern with clear separation between the presentation layer (frontend), business logic (controller), and specialized processing services (backend). This design ensures modularity, maintainability, and enables independent development of different components.
 
-At the core of the architecture lies the \texttt{game\_logic} package, which encapsulates the game's main logic: managing the target word, evaluating guesses, tracking errors, and determining win or loss conditions. The \texttt{user\_interface} package is responsible for rendering and updating the graphical user interface, while dynamically reflecting the game state.
+The application consists of three main architectural layers:
 
-The system supports multimodal interaction through two dedicated packages. The \texttt{input\_voice} package handles voice-based input acquisition and processing, leveraging speech recognition technologies. The \texttt{input\_gesture} package manages hand-drawn input captured via webcam and processed through computer vision techniques and a CNN-based classifier.
+\begin{description}
+\item[\textbf{Frontend Layer}] Web based user interface built with Flet, handling all user interactions and visual feedback
+\item[\textbf{Controller Layer}] AI powered game agent that manages game flow and natural language processing
+\item[\textbf{Backend Layer}] Computer vision and machine learning models for gesture recognition
+\end{description}
 
-Lastly, the \texttt{utils} package offers shared support utilities such as logging mechanisms, configuration file handlers, and global constants. This clear packaging strategy enhances modularity and facilitates future scalability.
+\subsection*{Module Structure}
+The project is organized into three primary modules, each serving distinct architectural roles:
 
-\subsection{Main Packages Details}
+\subsubsection*{\texttt{frontend/}}
+The frontend module implements the web based user interface using the Flet framework. It contains the complete presentation layer and game state management:
 
-\subsubsection{\texttt{game\_logic}}
-This package forms the heart of the application. It includes the \texttt{GameManager} class, which is responsible for the complete management of the hangman game state. It randomly selects a word from a predefined list, keeps track of correct and incorrect guesses, and determines when the game ends.
+\begin{description}
+\item[\texttt{main.py}] Application entry point that initializes the web interface and coordinates between components
+\item[\texttt{src/app/}] Core application logic including:
+  \begin{itemize}
+    \item \texttt{game\_logic.py}: \texttt{HangmanGame} class managing game rules, word tracking, and win/loss conditions
+    \item \texttt{state\_manager.py}: \texttt{GameStateManager} singleton implementing the observer pattern for real time UI updates
+  \end{itemize}
+\item[\texttt{src/components/}] Modular UI components:
+  \begin{itemize}
+    \item \texttt{game\_panel.py}: Main game display with word visualization and controls
+    \item \texttt{media\_controls.py}: Multimodal input interface (voice, gesture, chat)
+    \item \texttt{hand\_drawing\_recognition.py}: Computer vision integration for gesture input
+    \item \texttt{display.py}, \texttt{layout.py}: Responsive UI layout and visual components
+  \end{itemize}
+\end{description}
 
-The class exposes a simple interface to the rest of the system, providing methods such as \texttt{guess\_letter(letter)}, \texttt{is\_game\_over()}, and \texttt{get\_display\_word()} for game interaction. All game-related decision making is centralized in this package.
+\subsubsection*{\texttt{controller/}}
+The controller module houses the AI powered game agent that serves as an intelligent intermediary between user inputs and game actions:
 
-\subsubsection{\texttt{user\_interface}}
-The \texttt{user\_interface} package is tasked with constructing and updating the graphical layout of the application. Depending on the system version, the interface can be implemented using libraries such as \texttt{flet}, \texttt{tkinter}, or \texttt{pygame}. The core class, \texttt{UIManager}, handles the rendering of the current word state, the display of incorrect letters, and the remaining attempts.
+\begin{description}
+\item[\texttt{agent.py}] OpenAI conversational agent that:
+  \begin{itemize}
+    \item Interprets natural language commands and converts them to game actions
+    \item Maintains conversation context and provides adaptive hints
+    \item Manages game flow through structured function calls
+    \item Integrates with the frontend's \texttt{GameStateManager} for state synchronization
+  \end{itemize}
+\end{description}
 
-It also provides immediate visual feedback to the user's input through animations, color changes, and on-screen messages. Furthermore, it integrates the inputs from various modalities (voice, gesture, keyboard) to ensure a cohesive user experience.
+The agent uses a singleton pattern to ensure consistency between frontend and controller state management, enabling seamless communication between the AI logic and the User Interface.
 
-\subsubsection{\texttt{input\_voice}}
-This package manages voice-based interaction. Utilizing the \texttt{speech\_recognition} library, it supports multiple backends such as Google Speech API, Whisper, or offline engines. The \texttt{SpeechRecognizer} class handles the acquisition of audio input, the filtering of noise, the transcription of letters, and the resolution of ambiguities.
+\subsubsection*{\texttt{backend/}}
+The backend module provides specialized machine learning capabilities for gesture recognition:
 
-The module exposes methods such as \texttt{listen\_for\_letter()} and \texttt{get\_last\_result()} to other components, allowing seamless integration into the game loop. Error handling, silence timeouts, and recognition confidence thresholds are incorporated to ensure robustness.
+\begin{description}
+\item[\texttt{models/}] Pre trained neural network models:
+  \begin{itemize}
+    \item \texttt{letter\_recognition.h5}: CNN model trained on EMNIST dataset for hand drawn letter classification
+  \end{itemize}
+\item[\texttt{src/}] Computer vision processing pipeline:
+  \begin{itemize}
+    \item \texttt{hand\_model.py}: \texttt{HandModel} class for loading and running inference on hand drawn letters
+    \item \texttt{tracker.py}: Real time hand tracking and gesture detection using OpenCV
+  \end{itemize}
+\end{description}
 
-\subsubsection{\texttt{input\_gesture}}
-The \texttt{input\_gesture} package enables gesture-based input using computer vision. Through \texttt{OpenCV} and a trained Convolutional Neural Network (CNN), the system recognizes letters drawn in the air by the user's hand.
+\subsection*{Data Flow Architecture}
 
-The \texttt{GestureRecognizer} class is responsible for capturing video frames, applying image preprocessing (such as filtering, detection of the bounding box, and resizing), and performing inference using CNN. It returns the most probable letter detected. The main method, \texttt{capture\_and\_predict()}, encapsulates this entire workflow.
+The system implements a centralized state management pattern where all user inputs regardless of modality flow through the \texttt{GameStateManager}. This ensures consistent game state and enables seamless switching between input methods:
 
-This component is modular and extendable, capable of being re-trained with new datasets or adapted to improved neural architectures for higher accuracy.
+\begin{enumerate}
+\item \textbf{Input Processing}: Voice (speech recognition), gestures (CNN inference), or text input are processed by their respective handlers
+\item \textbf{State Management}: All inputs are channeled through the \texttt{GameStateManager}, which validates actions and updates game state
+\item \textbf{Observer Notification}: UI components are automatically updated via the observer pattern when state changes occur
+\item \textbf{AI Integration}: The OpenAI agent maintains parallel state synchronization for natural language processing and adaptive responses
+\end{enumerate}
+
+This architecture ensures that users can switch fluidly between input modalities without losing game context or experiencing state inconsistencies.
+
+\subsection*{Deployment Architecture}
+
+\textit{MultiModalMan} is deployed as a web application that runs locally and serves a browser-based interface. The deployment model supports rapid development and cross-platform compatibility:
+
+\begin{description}
+\item[\textbf{Local Server}] The Flet framework creates a local web server that hosts the application interface
+\item[\textbf{Browser Client}] Users interact through any modern web browser, requiring no additional software installation
+\item[\textbf{External Services}] The application integrates with external APIs:
+  \begin{itemize}
+    \item OpenAI API for natural language processing and conversational AI
+    \item Google Speech Recognition API for voice input processing
+  \end{itemize}
+\end{description}
