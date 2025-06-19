@@ -55,7 +55,7 @@ The right panel provides three input modalities through a tabbed navigation inte
 
 \subsection*{State Management and Observer Pattern}
 
-The application uses a centralized state management system with an observer pattern for real-time UI updates:
+The application uses a centralized state management system with an observer pattern for real time UI updates:
 
 \begin{lstlisting}[style=pystyle, caption={Observer Pattern Implementation}]
 class GameStateManager:
@@ -75,23 +75,16 @@ self.state_manager.add_observer(self.on_state_changed)
 
 This ensures that all UI components automatically update when the game state changes, whether triggered by manual input, voice commands, hand gestures, or AI agent actions.
 
+\newpage
 \subsection*{Component Implementation Details}
-
 \subsubsection*{GameDisplay Component}
-
 The \texttt{GameDisplay} component handles the visual representation of the current game state:
 
-\begin{lstlisting}[style=pystyle, caption={GameDisplay Update Logic}]
-def update(self, state):
-    # Handle revealed word display
-    if state.game_status == "revealed" and state.secret_word:
-        self.word.value = " ".join(state.secret_word)
-        self.word.color = config.COLOR_PALETTE["error"]
-    else:
-        self.word.value = state.display_word
-        self.word.color = None
-    self._update_status(state)
-\end{lstlisting}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.55\textwidth]{./images/hang-man.png}
+    \caption{GameDisplay component showing the current word state, guessed letters, and remaining attempts.}
+\end{figure}
 
 \subsubsection*{HangmanVisual Component}
 
@@ -109,16 +102,3 @@ def update_state(self, wrong_guesses):
 \subsubsection*{MediaControls Navigation}
 
 The multimodal interface uses a navigation bar to switch between input methods:
-
-\begin{lstlisting}[style=pystyle, caption={Multimodal Interface Navigation}]
-def _handle_tab_change(self, e):
-    """Handle navigation rail tab change"""
-    selected_index = e.control.selected_index
-    if selected_index == 0:  # Chat
-        self.view_container.content = self.chat_view
-    elif selected_index == 1:  # Voice
-        self.view_container.content = self.voice_view  
-    elif selected_index == 2:  # Drawing
-        self.view_container.content = self.drawing_view
-    self.view_container.update()
-\end{lstlisting}
