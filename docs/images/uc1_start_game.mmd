@@ -1,0 +1,47 @@
+---
+title: UC1 - Start Game Use Case
+---
+flowchart TD
+    %% Actor
+    Player((Player))
+    
+    %% Use Case
+    UC1[UC1 - Start Game]
+    
+    %% System Components
+    App[Application]
+    System[System]
+    HomeScreen[Home Screen]
+    
+    %% Actions/Steps
+    Launch["Launch Application"]
+    LoadResources["Load Resources"]
+    ShowHome["Show Home Screen"]
+    Ready["System Ready to Accept Input"]
+    
+    %% Flow
+    Player --> Launch
+    Launch --> App
+    App --> LoadResources
+    LoadResources --> System
+    System --> ShowHome
+    ShowHome --> HomeScreen
+    HomeScreen --> Ready
+    
+    %% Use Case boundary
+    UC1 -.-> Launch
+    UC1 -.-> LoadResources
+    UC1 -.-> ShowHome
+    
+    %% Styling
+    classDef actor fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef usecase fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef system fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef action fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef state fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class Player actor
+    class UC1 usecase
+    class App,System,HomeScreen system
+    class Launch,LoadResources,ShowHome action
+    class Ready state
