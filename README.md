@@ -7,7 +7,7 @@ MultiModalMan is an interactive, multi-modal Hangman game that combines various 
 - Multiple input methods:
   - Text input through chat
   - Voice recognition for verbal letter guessing
-  - Hand gesture/drawing recognition for American Sign Language (ASL)
+  - Hand drawing recognition
 - Interactive hangman visuals
 - AI agent as the game master
 - Real-time feedback and game state updates
@@ -26,7 +26,6 @@ MultiModalMan is an interactive, multi-modal Hangman game that combines various 
 
 ```bash
 git clone <repository-url>
-cd L-impiccato2.0
 ```
 
 ### 2. Set up a virtual environment
