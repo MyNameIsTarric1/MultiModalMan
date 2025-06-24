@@ -50,10 +50,18 @@ def sync_with_game() -> str:
     display_word = current_state.display_word
     remaining_attempts = current_state.remaining_attempts
     guessed_letters = ", ".join(sorted(current_state.guessed_letters)) if current_state.guessed_letters else "none"
+    game_status = current_state.game_status
     
-    print(f"===AGENT DEBUG=== Successfully synced with active game, word: {secret_word}, display: {display_word}")
+    print(f"===AGENT DEBUG=== Successfully synced with active game, word: {secret_word}, display: {display_word}, status: {game_status}")
     
-    return f"I've synced with your active game! The current state is: {display_word}. You have {remaining_attempts} attempts remaining. Letters guessed so far: {guessed_letters}. What letter would you like to guess next?"
+    # Provide different responses based on game status
+    if game_status == "won":
+        return f"I've synced with your active game! The game has already been won! The word was '{secret_word}'. Would you like to start a new game?"
+    elif game_status == "lost":
+        return f"I've synced with your active game! The game has already been lost. The word was '{secret_word}'. Would you like to start a new game?"
+    else:
+        # Game is still ongoing
+        return f"I've synced with your active game! The current state is: {display_word}. You have {remaining_attempts} attempts remaining. Letters guessed so far: {guessed_letters}. What letter would you like to guess next?"
 
 @function_tool
 def start_game(word_choice: str = "agent") -> str:
@@ -127,8 +135,14 @@ def guess_letter(letter: str) -> str:
     
     # We have an active game, so sync with it
     if current_state:
-        print(f"===AGENT DEBUG=== Found active game with word: {manager.current_game.secret_word}")
+        print(f"===AGENT DEBUG=== Found active game with word: {manager.current_game.secret_word}, syncing state")
         state["game_state"] = current_state
+        
+        # Check if the game is already over
+        if current_state.game_status == "won":
+            return f"This game has already been won! The word was '{current_state.secret_word}'. Would you like to start a new game?"
+        elif current_state.game_status == "lost":
+            return f"This game has already been lost. The word was '{current_state.secret_word}'. Would you like to start a new game?"
     
     try:
         # Process the guess and get updated state
@@ -145,7 +159,7 @@ def guess_letter(letter: str) -> str:
         # Build the response
         print(f"===AGENT DEBUG=== Guess processed successfully, word: {game_state.secret_word}, display: {game_state.display_word}")
         
-        # Format the response in Italian
+        # Format the response
         msg = f"You suggested the letter '{letter}'. "
         msg += "✅ Correct!" if letter in game_state.secret_word else "❌ Not in the word."
         msg += f" Current word: {game_state.display_word} — Attempts remaining: {game_state.remaining_attempts}"
@@ -183,6 +197,7 @@ sync_agent = Agent(
     name="sync_agent",
     instructions="Sync with an active game if one exists.",
     tools=[sync_with_game],
+    model="gpt-4o"  # Set the model here
 )
 
 #  WELCOME AGENT
@@ -190,6 +205,7 @@ welcome_agent = Agent(
     name="welcome_agent",
     instructions="Welcome the user and explain the rules of the hangman game.",
     tools=[start_game],
+    model="gpt-4o"  # Set the model here
 )
 
 # WORDSETTER AGENT
@@ -197,6 +213,7 @@ wordsetter_agent = Agent(
     name="wordsetter_agent",
     instructions="Choose a word to guess or ask the user to enter one.",
     tools=[set_user_word],
+    model="gpt-4o"  # Set the model here
 )
 
 # LETTER GUESSER AGENT
@@ -204,6 +221,7 @@ letter_guesser_agent = Agent(
     name="letter_guesser_agent",
     instructions="Suggest a letter to guess.",
     tools=[guess_letter],
+    model="gpt-4o"  # Set the model here
 )
 
 # GAME RESTARTER AGENT
@@ -211,6 +229,7 @@ game_restarter_agent = Agent(
     name="game_restarter_agent",
     instructions="Restart a new game.",
     tools=[restart],
+    model="gpt-4o"  # Set the model here
 )
 
 agent = Agent(
@@ -229,9 +248,10 @@ agent = Agent(
             - They can always type letters in the chat
 
         IMPORTANT WORKFLOW FOR GUESSING LETTERS:
-            - When a user wants to guess a letter, always use the sync_agent tool first to see if there's an active game
+            - ALWAYS call the sync_agent tool first before processing any letter guesses
+            - This ensures you connect to any active game that might have been started manually
             - Only after confirming an active game exists, use the letter_guesser_agent to process the guess
-            - If sync_agent indicates no active game, offer to start a new one
+            - If sync_agent indicates no active game, offer to start a new game
 
         After each letter:
             - Confirm to the user what they proposed.
@@ -262,7 +282,8 @@ agent = Agent(
             tool_name = "sync_agent",
             tool_description = "Syncs with an active game if one exists.",
         ),
-    ]
+    ],
+    model="gpt-4o"  # Set the model here
 )
 
 async def main():
@@ -277,7 +298,10 @@ async def main():
             print(f"===AGENT RUNNER=== Running agent with inputs, conversation ID: {conversation_id}")
             
             with trace("Game Agent", group_id=conversation_id):
-                result = await Runner.run(agent, input=inputs)
+                result = await Runner.run(
+                    agent, 
+                    input=inputs,
+                )
 
                 for item in result.new_items:
                     if isinstance(item, MessageOutputItem):
