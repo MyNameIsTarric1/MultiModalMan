@@ -117,6 +117,30 @@ class VoiceAnimation(ft.Container):
         except Exception as e:
             print(f"Error updating UI after stopping recording: {e}")
     
+    def stop_recording_preserve_letter(self):
+        """Stop recording but preserve the letter display"""
+        self.recording = False
+        
+        # Stop animation thread
+        self.stop_thread = True
+        if self.animation_thread and self.animation_thread.is_alive():
+            self.animation_thread.join(timeout=1.0)
+            
+        # Reset bars and completely hide them
+        for bar in self.bars:
+            bar.visible = False
+            bar.height = 10
+        
+        # Don't clear letter display - keep it showing
+        # The letter will remain visible until the next recording session
+        
+        # Force UI update to clear the animation but keep the letter
+        try:
+            if hasattr(ft, 'page') and ft.page is not None:
+                ft.page.update(self)
+        except Exception as e:
+            print(f"Error updating UI after stopping recording: {e}")
+    
     def _start_animation(self):
         # Make bars visible
         for bar in self.bars:
