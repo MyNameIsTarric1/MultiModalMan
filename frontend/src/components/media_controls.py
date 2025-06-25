@@ -132,6 +132,7 @@ class MediaControls:
         return ft.NavigationBar(
             bgcolor=ft.colors.WHITE,
             selected_index=2,  # Start with Chat selected
+            indicator_color=ft.colors.BLUE_800,  # Set selected background to blue
             destinations=[
                 ft.NavigationBarDestination(
                     icon=ft.icons.MIC_OUTLINED,
@@ -887,8 +888,6 @@ class MediaControls:
         self.mic_button.bgcolor = ft.colors.RED_400
         self.mic_button.update()
         
-        self.show_notification("Voice recording started. Speak your message...")
-        
         # Start voice recording in a separate thread to avoid blocking the UI
         Thread(target=self._voice_to_text_worker).start()
     
@@ -899,41 +898,54 @@ class MediaControls:
         self.mic_button.icon = ft.Icons.MIC
         self.mic_button.bgcolor = None
         self.mic_button.update()
-        self.show_notification("Voice recording stopped")
     
     def _voice_to_text_worker(self):
         """Worker thread to handle voice recording and conversion to text"""
         recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            try:
-                # Adjust for ambient noise and listen
-                recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
-                
-                # Use Google's speech recognition to convert to text
-                text = recognizer.recognize_google(audio, language="en-US").strip()
-                
-                # Update the chat input field with the recognized text - using page.update() which is thread-safe
-                self.chat_input.value = text
-                ft.page.update(self.chat_input)
-                self.show_notification(f"Recognized: {text}")
-                
-            except sr.UnknownValueError:
-                self.show_notification("Could not understand audio")
-            except sr.RequestError as e:
-                self.show_notification(f"Speech recognition service error: {e}")
-            except sr.WaitTimeoutError:
-                self.show_notification("Listening timed out")
-            except Exception as e:
-                self.show_notification(f"Error recording voice: {e}")
-            finally:
-                # Always reset the recording state
-                self.is_recording_voice_for_chat = False
-                
-                # Reset mic button appearance using page.update which is thread-safe
+        try:
+            with sr.Microphone() as source:
+                print("===MEDIA_CONTROLS=== Microphone initialized successfully")
+                try:
+                    # Adjust for ambient noise and listen
+                    print("===MEDIA_CONTROLS=== Starting ambient noise adjustment...")
+                    recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    print("===MEDIA_CONTROLS=== Starting to listen for speech...")
+                    audio = recognizer.listen(source, timeout=10, phrase_time_limit=10)
+                    print("===MEDIA_CONTROLS=== Audio captured, processing...")
+                    
+                    # Use Google's speech recognition to convert to text
+                    text = recognizer.recognize_google(audio, language="en-US").strip()
+                    print(f"===MEDIA_CONTROLS=== Speech recognized: {text}")
+                    
+                    # Update the chat input field with the recognized text
+                    if self.chat_input:
+                        self.chat_input.value = text
+                        self.chat_input.update()
+                        print("===MEDIA_CONTROLS=== Chat input updated with recognized text")
+                    
+                except sr.UnknownValueError:
+                    print("===MEDIA_CONTROLS=== Could not understand audio")
+                except sr.RequestError as e:
+                    print(f"===MEDIA_CONTROLS=== Speech recognition service error: {e}")
+                except sr.WaitTimeoutError:
+                    print("===MEDIA_CONTROLS=== Listening timed out")
+                except Exception as e:
+                    print(f"===MEDIA_CONTROLS=== Error during speech recognition: {e}")
+                    
+        except Exception as e:
+            print(f"===MEDIA_CONTROLS=== Error initializing microphone: {e}")
+            # This is likely where the PaMacCore error would be caught
+            
+        finally:
+            # Always reset the recording state
+            self.is_recording_voice_for_chat = False
+            
+            # Reset mic button appearance
+            if self.mic_button:
                 self.mic_button.icon = ft.Icons.MIC
                 self.mic_button.bgcolor = None
-                ft.page.update(self.mic_button)
+                self.mic_button.update()
+                print("===MEDIA_CONTROLS=== Mic button reset to normal state")
     
     def ensure_ui_synced_with_game(self):
         """Ensure that the UI is synchronized with active game state"""
