@@ -298,6 +298,14 @@ class MediaControls:
         ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
         
     def _start_voice_recording(self, e):
+        # Check if there's already a detected letter displayed
+        if hasattr(self.voice_animation.letter_display, 'value') and self.voice_animation.letter_display.value and len(self.voice_animation.letter_display.value) == 1 and self.voice_animation.letter_display.value.isalpha():
+            # Clear the previous detection before starting new recording
+            self.voice_animation.letter_display.value = "Listening..."
+            self.voice_animation.letter_display.color = ft.Colors.BLUE_600
+            self.voice_animation.letter_display.size = 32
+            self.voice_animation.letter_display.update()
+        
         self._reset_all_views()
         self.active_view = "voice"
         self.voice_animation.toggle_recording()
@@ -315,7 +323,12 @@ class MediaControls:
                         self.voice_animation.letter_display.color = ft.Colors.GREEN_600
                         self.voice_animation.letter_display.size = 56
                         self.voice_animation.letter_display.update()
+                        
+                        # Process the guess immediately
                         self.on_guess(possible_letter)
+                        
+                        # Keep the letter displayed - don't clear it
+                        # The letter will remain until the next voice input session starts
                     else:
                         self.voice_animation.letter_display.value = "Invalid"
                         self.voice_animation.letter_display.color = ft.Colors.RED_600
@@ -343,10 +356,9 @@ class MediaControls:
                 self.voice_animation.letter_display.size = 28
                 self.voice_animation.letter_display.update()
 
-        self.voice_animation.stop_recording()
+        # Stop the recording animation but keep the detected letter displayed
+        self.voice_animation.stop_recording_preserve_letter()
         self.active_view = None
-
-        #self.on_guess(text)
     
     def _stop_voice_recording(self, _):
         """Stop recording and process the audio"""
@@ -583,15 +595,13 @@ class MediaControls:
                 self._switch_to_view("drawing")
                 await asyncio.sleep(0.1)  # Give UI time to update
                 await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, 
-                    "I've switched to drawing mode. You can now draw your letter on the canvas.\n" +
-                    "If you want to switch back, just say 'I want to use chat' or 'back to chat'.")
+                    "I've switched to drawing mode. You can now draw your letter on the canvas.")
                 return
             elif "voice" in lower_message and ("say" in lower_message or "want" in lower_message or "speak" in lower_message):
                 self._switch_to_view("voice")
                 await asyncio.sleep(0.1)  # Give UI time to update
                 await asyncio.get_event_loop().run_in_executor(None, self._add_agent_message, 
-                    "I've switched to voice mode. You can now say your letter starting with 'Letter' followed by your guess.\n" +
-                    "If you want to switch back, just say 'I want to use chat' or 'back to chat'.")
+                    "I've switched to voice mode. You can now say your letter starting with 'Letter' followed by your guess.")
                 return
             
             # Check if this is a message that might contain a letter guess
