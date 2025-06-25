@@ -166,32 +166,42 @@ class MediaControls:
             self.view_container.content = self.drawing_view
         elif index == 2:  # Chat view
             self.current_tab = "chat"
-            # Create a fresh chat view each time we switch back
-            old_messages = []
-            if self.chat_history:
-                # Save existing messages
-                old_messages = [(control.content.value, control.bgcolor) 
-                              for control in self.chat_history.controls]
+            print("===MEDIA_CONTROLS=== Switching to chat view")
             
-            # Create completely new chat view
-            self.chat_view = self._create_chat_view()
-            self.view_container.content = self.chat_view
-            
-            # Restore previous messages if any
-            if old_messages:
-                self.chat_history.controls.clear()
-                for msg, bg_color in old_messages:
-                    self.chat_history.controls.append(
-                        ft.Container(
-                            content=ft.Text(msg, color=ft.Colors.BLACK),
-                            bgcolor=bg_color,
-                            border_radius=ft.border_radius.all(10),
-                            padding=10,
-                            width=300,
-                            alignment=ft.alignment.center_left if bg_color == ft.Colors.BLUE_50 
-                                    else ft.alignment.center_right
-                        )
-                    )
+            try:
+                # Simply switch back to the existing chat view - don't recreate it
+                # This preserves the conversation history and agent state
+                self.view_container.content = self.chat_view
+                
+                # Ensure the input components are properly referenced and enabled
+                # This fixes the issue where input becomes non-functional after switching back
+                self._refresh_chat_input_references()
+                
+            except Exception as e:
+                print(f"===MEDIA_CONTROLS=== Error switching to chat view: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                # If there's an error, try to recreate the chat view as a fallback
+                try:
+                    print("===MEDIA_CONTROLS=== Attempting to recreate chat view as fallback")
+                    # Save existing conversation history
+                    old_history = []
+                    if self.chat_history and hasattr(self.chat_history, 'controls'):
+                        old_history = self.chat_history.controls.copy()
+                    
+                    # Recreate chat view
+                    self.chat_view = self._create_chat_view()
+                    self.view_container.content = self.chat_view
+                    
+                    # Restore history if we had any
+                    if old_history and self.chat_history:
+                        self.chat_history.controls.clear()
+                        self.chat_history.controls.extend(old_history)
+                        self.chat_history.update()
+                        
+                except Exception as recreate_error:
+                    print(f"===MEDIA_CONTROLS=== Failed to recreate chat view: {recreate_error}")
             
         self.view_container.update()
             
@@ -436,6 +446,14 @@ class MediaControls:
     
     def _send_message(self, e):
         """Send a user message to the agent and get a response"""
+        # Ensure we have valid references to the input components
+        if not self.chat_input:
+            print("===MEDIA_CONTROLS=== Chat input reference is None, refreshing references")
+            self._refresh_chat_input_references()
+            if not self.chat_input:
+                print("===MEDIA_CONTROLS=== Still no valid chat input reference after refresh")
+                return
+        
         # Get user message from input field
         message = self.chat_input.value
         if not message or message.strip() == "":
@@ -456,24 +474,54 @@ class MediaControls:
     
     def _add_user_message(self, message):
         """Add a user message to the chat history"""
-        self.chat_history.controls.append(
-            ft.Container(
-                content=ft.Text(message, color=ft.Colors.BLACK),
-                bgcolor=ft.Colors.GREY_200,
-                border_radius=ft.border_radius.all(10),
-                padding=10,
-                width=300,
-                alignment=ft.alignment.center_right
+        try:
+            if not self.chat_history:
+                print("===MEDIA_CONTROLS=== chat_history is None, cannot add user message")
+                return
+                
+            self.chat_history.controls.append(
+                ft.Container(
+                    content=ft.Text(message, color=ft.Colors.BLACK),
+                    bgcolor=ft.Colors.GREY_200,
+                    border_radius=ft.border_radius.all(10),
+                    padding=10,
+                    width=300,
+                    alignment=ft.alignment.center_right
+                )
             )
-        )
-        self.chat_history.update()
+            
+            # Only update if the chat history is properly attached to the page
+            if hasattr(self.chat_history, 'page') and self.chat_history.page and self.current_tab == "chat":
+                self.chat_history.update()
+                print("===MEDIA_CONTROLS=== Successfully updated chat history with user message")
+            else:
+                print("===MEDIA_CONTROLS=== Chat history not attached to page, message added but not updated")
+                # Try to update the entire view container instead
+                if self.view_container and hasattr(self.view_container, 'page') and self.view_container.page:
+                    self.view_container.update()
+                    print("===MEDIA_CONTROLS=== Updated view container instead")
+                    
+        except Exception as e:
+            print(f"===MEDIA_CONTROLS=== Error adding user message: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _add_agent_message(self, message):
         """Add an agent message to the chat history"""
         try:
             # Check if chat_history needs to be reinitialized
-            if not self.chat_history or not self.chat_history.page:
-                self.chat_history = self._create_chat_view().controls[1].content
+            if not self.chat_history:
+                print("===MEDIA_CONTROLS=== chat_history is None, attempting to reinitialize")
+                # Try to get chat_history from the current chat view
+                if self.chat_view and hasattr(self.chat_view, 'controls') and len(self.chat_view.controls) > 1:
+                    chat_container = self.chat_view.controls[1]  # Chat history container
+                    if hasattr(chat_container, 'content'):
+                        self.chat_history = chat_container.content
+                        print("===MEDIA_CONTROLS=== Reinitialized chat_history from chat view")
+                
+            if not self.chat_history:
+                print("===MEDIA_CONTROLS=== Still no chat_history, cannot add agent message")
+                return
                 
             self.chat_history.controls.append(
                 ft.Container(
@@ -486,17 +534,24 @@ class MediaControls:
                 )
             )
             
-            # Update only if the chat view is currently active
-            if self.current_tab == "chat" and self.chat_history.page:
-                self.chat_history.update()
+            # Only update if the chat view is currently active and properly attached
+            if self.current_tab == "chat":
+                if hasattr(self.chat_history, 'page') and self.chat_history.page:
+                    self.chat_history.update()
+                    print("===MEDIA_CONTROLS=== Successfully updated chat history with agent message")
+                else:
+                    print("===MEDIA_CONTROLS=== Chat history not attached to page, trying view container update")
+                    # Try to update the entire view container instead
+                    if self.view_container and hasattr(self.view_container, 'page') and self.view_container.page:
+                        self.view_container.update()
+                        print("===MEDIA_CONTROLS=== Updated view container with agent message")
+            else:
+                print(f"===MEDIA_CONTROLS=== Not in chat tab (current: {self.current_tab}), message added but not updated")
+                
         except Exception as e:
-            print(f"Error adding agent message: {e}")
-            # If there's an error, queue the message for when chat is active
-            def delayed_add():
-                if self.chat_history and self.chat_history.page:
-                    self._add_agent_message(message)
-            if ft.page:
-                ft.page.add_action(delayed_add)
+            print(f"===MEDIA_CONTROLS=== Error adding agent message: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _switch_to_view(self, view_name):
         """Switch to a specific view programmatically"""
@@ -672,16 +727,59 @@ class MediaControls:
     
     def _set_input_state(self, disabled=False):
         """Enable or disable the chat input components"""
-        self.chat_input.disabled = disabled
-        self.send_button.disabled = disabled
-        self.mic_button.disabled = disabled
-        self.chat_input.update()
-        self.send_button.update()
-        self.mic_button.update()
+        try:
+            print(f"===MEDIA_CONTROLS=== Setting input state, disabled={disabled}")
+            
+            # Check and update chat_input
+            if self.chat_input:
+                try:
+                    self.chat_input.disabled = disabled
+                    self.chat_input.update()
+                    print("===MEDIA_CONTROLS=== Updated chat_input state")
+                except Exception as e:
+                    print(f"===MEDIA_CONTROLS=== Error updating chat_input: {e}")
+            else:
+                print("===MEDIA_CONTROLS=== chat_input is None")
+                
+            # Check and update send_button
+            if self.send_button:
+                try:
+                    self.send_button.disabled = disabled
+                    self.send_button.update()
+                    print("===MEDIA_CONTROLS=== Updated send_button state")
+                except Exception as e:
+                    print(f"===MEDIA_CONTROLS=== Error updating send_button: {e}")
+            else:
+                print("===MEDIA_CONTROLS=== send_button is None")
+                
+            # Check and update mic_button
+            if self.mic_button:
+                try:
+                    self.mic_button.disabled = disabled
+                    self.mic_button.update()
+                    print("===MEDIA_CONTROLS=== Updated mic_button state")
+                except Exception as e:
+                    print(f"===MEDIA_CONTROLS=== Error updating mic_button: {e}")
+            else:
+                print("===MEDIA_CONTROLS=== mic_button is None")
+                
+        except Exception as e:
+            print(f"===MEDIA_CONTROLS=== Error setting input state: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Try to refresh references if there's an error
+            try:
+                print("===MEDIA_CONTROLS=== Attempting to refresh references due to error")
+                self._refresh_chat_input_references()
+            except Exception as refresh_error:
+                print(f"===MEDIA_CONTROLS=== Error during reference refresh: {refresh_error}")
     
     def reset_chat(self):
         """Reset the chat conversation when starting a new game"""
-        # Clear conversation history
+        print("===MEDIA_CONTROLS=== Resetting chat for new game")
+        
+        # Clear conversation history and agent state
         self.agent_inputs = []
         self.conversation_id = None
         
@@ -715,6 +813,12 @@ class MediaControls:
     # New voice-to-text functionality for chat
     def _toggle_voice_to_text(self, e):
         """Toggle voice recording for text input"""
+        # Ensure we have valid references
+        if not self.mic_button:
+            self._refresh_chat_input_references()
+            if not self.mic_button:
+                return
+        
         if self.is_recording_voice_for_chat:
             # Stop recording
             self._stop_voice_to_text_recording()
@@ -802,3 +906,80 @@ class MediaControls:
         except Exception as e:
             print(f"===MEDIA_CONTROLS=== Error syncing UI with game state: {e}")
         return False
+    
+    def _refresh_chat_input_references(self):
+        """Refresh references to chat input components to ensure they're functional"""
+        try:
+            print("===MEDIA_CONTROLS=== Attempting to refresh chat input references")
+            
+            # Check if chat_view exists and has the expected structure
+            if not self.chat_view:
+                print("===MEDIA_CONTROLS=== Chat view is None, cannot refresh references")
+                return
+                
+            if not hasattr(self.chat_view, 'controls'):
+                print("===MEDIA_CONTROLS=== Chat view has no controls attribute")
+                return
+                
+            if len(self.chat_view.controls) == 0:
+                print("===MEDIA_CONTROLS=== Chat view has no controls")
+                return
+            
+            print(f"===MEDIA_CONTROLS=== Chat view has {len(self.chat_view.controls)} controls")
+            
+            # The chat_view is a Column with the input row as the last element
+            # Structure should be: [Title, Chat History Container, Input Row]
+            if len(self.chat_view.controls) >= 3:
+                # Refresh chat_history reference (second element - the container)
+                chat_container = self.chat_view.controls[1]  # Chat history container
+                if hasattr(chat_container, 'content'):
+                    self.chat_history = chat_container.content
+                    print("===MEDIA_CONTROLS=== Refreshed chat_history reference")
+                
+                # Refresh input components (last element - the input row)
+                input_row = self.chat_view.controls[-1]  # Last element should be the input row
+                print(f"===MEDIA_CONTROLS=== Found input row: {type(input_row)}")
+                
+                if hasattr(input_row, 'controls') and len(input_row.controls) >= 3:
+                    print(f"===MEDIA_CONTROLS=== Input row has {len(input_row.controls)} controls")
+                    
+                    # Verify the types before assigning
+                    text_field = input_row.controls[0]
+                    send_btn = input_row.controls[1] 
+                    mic_btn = input_row.controls[2]
+                    
+                    print(f"===MEDIA_CONTROLS=== Control types: {type(text_field)}, {type(send_btn)}, {type(mic_btn)}")
+                    
+                    # Only update references if they are the expected types
+                    if hasattr(text_field, 'value') and hasattr(text_field, 'disabled'):  # TextField-like
+                        self.chat_input = text_field
+                        print("===MEDIA_CONTROLS=== Updated chat_input reference")
+                    
+                    if hasattr(send_btn, 'disabled'):  # Button-like
+                        self.send_button = send_btn
+                        print("===MEDIA_CONTROLS=== Updated send_button reference")
+                    
+                    if hasattr(mic_btn, 'disabled'):  # Button-like  
+                        self.mic_button = mic_btn
+                        print("===MEDIA_CONTROLS=== Updated mic_button reference")
+                    
+                    # Ensure they're enabled
+                    self._set_input_state(disabled=False)
+                    print("===MEDIA_CONTROLS=== Successfully refreshed all chat references")
+                else:
+                    print(f"===MEDIA_CONTROLS=== Input row structure not as expected. Controls: {len(input_row.controls) if hasattr(input_row, 'controls') else 'no controls'}")
+            else:
+                print(f"===MEDIA_CONTROLS=== Chat view doesn't have enough controls: {len(self.chat_view.controls)}")
+                
+        except Exception as e:
+            print(f"===MEDIA_CONTROLS=== Error refreshing chat input references: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Fallback: try to keep current references working if they exist
+            try:
+                if self.chat_input and self.send_button and self.mic_button:
+                    self._set_input_state(disabled=False)
+                    print("===MEDIA_CONTROLS=== Used fallback to enable existing references")
+            except Exception as fallback_error:
+                print(f"===MEDIA_CONTROLS=== Fallback also failed: {fallback_error}")
