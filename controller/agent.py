@@ -5,7 +5,7 @@ import inspect
 import asyncio
 import uuid
 from dotenv import load_dotenv
-from typing import TypedDict, List, Dict, Any
+from typing import TypedDict, List
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from frontend.src.app.state_manager import GameStateManager
@@ -61,7 +61,7 @@ def sync_with_game() -> str:
         return f"I've synced with your active game! The game has already been lost. The word was '{secret_word}'. Would you like to start a new game?"
     else:
         # Game is still ongoing
-        return f"I've synced with your active game! The current state is: {display_word}. You have {remaining_attempts} attempts remaining. Letters guessed so far: {guessed_letters}. What letter would you like to guess next?"
+        return f"I've synced with your active game! You have {remaining_attempts} attempts remaining. Letters guessed so far: {guessed_letters}. What letter would you like to guess next?"
 
 @function_tool
 def start_game(word_choice: str = "agent") -> str:
@@ -162,7 +162,7 @@ def guess_letter(letter: str) -> str:
         # Format the response
         msg = f"You suggested the letter '{letter}'. "
         msg += "✅ Correct!" if letter in game_state.secret_word else "❌ Not in the word."
-        msg += f" Current word: {game_state.display_word} — Attempts remaining: {game_state.remaining_attempts}"
+        msg += f" Attempts remaining: {game_state.remaining_attempts}"
 
         if game_state.game_status == "won":
             return msg + " 🎉 You guessed the word! Want to start a new game?"
