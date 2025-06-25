@@ -36,6 +36,12 @@ class MediaControls:
         self.chat_input = None  # Will be set in _create_chat_view
         self.send_button = None  # Will be set in _create_chat_view
         
+        # Voice recording attributes
+        self.recording = False
+        self.recognizer = None
+        self.source = None
+        self.audio = None
+        
         # Voice recognition for chat - NEW
         self.is_recording_voice_for_chat = False
         self.mic_button = ft.IconButton(
@@ -298,6 +304,10 @@ class MediaControls:
         ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
         
     def _start_voice_recording(self, e):
+        """Start voice recording session"""
+        if self.recording:
+            return  # Already recording
+            
         # Check if there's already a detected letter displayed
         if hasattr(self.voice_animation.letter_display, 'value') and self.voice_animation.letter_display.value and len(self.voice_animation.letter_display.value) == 1 and self.voice_animation.letter_display.value.isalpha():
             # Clear the previous detection before starting new recording
@@ -309,79 +319,106 @@ class MediaControls:
         self._reset_all_views()
         self.active_view = "voice"
         self.voice_animation.toggle_recording()
-
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            try:
-                audio = recognizer.listen(source, timeout=5)
-                text = recognizer.recognize_google(audio, language="en-US").strip().upper()
-                if text.startswith("LETTER "):
-                    possible_letter = text.replace("LETTER ", "").strip()
-
-                    if len(possible_letter) == 1 and possible_letter.isalpha():
-                        self.voice_animation.letter_display.value = possible_letter
-                        self.voice_animation.letter_display.color = ft.Colors.GREEN_600
-                        self.voice_animation.letter_display.size = 56
-                        self.voice_animation.letter_display.update()
-                        
-                        # Process the guess immediately
-                        self.on_guess(possible_letter)
-                        
-                        # Keep the letter displayed - don't clear it
-                        # The letter will remain until the next voice input session starts
-                    else:
-                        self.voice_animation.letter_display.value = "Invalid"
-                        self.voice_animation.letter_display.color = ft.Colors.RED_600
-                        self.voice_animation.letter_display.size = 32
-                        self.voice_animation.letter_display.update()
-                else:
-                    self.voice_animation.letter_display.value = "Say 'Letter X'"
-                    self.voice_animation.letter_display.color = ft.Colors.ORANGE_600
-                    self.voice_animation.letter_display.size = 28
-                    self.voice_animation.letter_display.update()
+        
+        # Initialize voice recognition
+        self.recording = True
+        self.recognizer = sr.Recognizer()
+        self.source = sr.Microphone()
+        
+        # Start recording in a separate thread to avoid blocking the UI
+        Thread(target=self._voice_recording_worker).start()
+    
+    def _voice_recording_worker(self):
+        """Worker thread to handle voice recording"""
+        try:
+            with self.source as source:
+                self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                self.audio = self.recognizer.listen(source, timeout=10, phrase_time_limit=5)
+                
+                # Only process if still recording (user didn't stop manually)
+                if self.recording:
+                    self._process_voice_recognition()
                     
-            except sr.UnknownValueError:
-                self.voice_animation.letter_display.value = "Didn't understand"
-                self.voice_animation.letter_display.color = ft.Colors.GREY_600
-                self.voice_animation.letter_display.size = 24
-                self.voice_animation.letter_display.update()
-            except sr.RequestError:
-                self.voice_animation.letter_display.value = "Service Error"
-                self.voice_animation.letter_display.color = ft.Colors.RED_600
-                self.voice_animation.letter_display.size = 24
-                self.voice_animation.letter_display.update()
-            except sr.WaitTimeoutError:
+        except sr.WaitTimeoutError:
+            if self.recording:  # Only show timeout if user didn't manually stop
                 self.voice_animation.letter_display.value = "Timeout"
                 self.voice_animation.letter_display.color = ft.Colors.AMBER_600
                 self.voice_animation.letter_display.size = 28
                 self.voice_animation.letter_display.update()
+        except Exception as e:
+            if self.recording:  # Only show error if user didn't manually stop
+                self.voice_animation.letter_display.value = "Error"
+                self.voice_animation.letter_display.color = ft.Colors.RED_600
+                self.voice_animation.letter_display.size = 24
+                self.voice_animation.letter_display.update()
+                print(f"Voice recording error: {e}")
+        finally:
+            # Clean up and stop recording
+            self._finalize_voice_recording()
+    
+    def _process_voice_recognition(self):
+        """Process the recorded audio and recognize speech"""
+        try:
+            text = self.recognizer.recognize_google(self.audio, language="en-US").strip().upper()
+            if text.startswith("LETTER "):
+                possible_letter = text.replace("LETTER ", "").strip()
 
+                if len(possible_letter) == 1 and possible_letter.isalpha():
+                    self.voice_animation.letter_display.value = possible_letter
+                    self.voice_animation.letter_display.color = ft.Colors.GREEN_600
+                    self.voice_animation.letter_display.size = 56
+                    self.voice_animation.letter_display.update()
+                    
+                    # Process the guess immediately
+                    self.on_guess(possible_letter)
+                else:
+                    self.voice_animation.letter_display.value = "Invalid"
+                    self.voice_animation.letter_display.color = ft.Colors.RED_600
+                    self.voice_animation.letter_display.size = 32
+                    self.voice_animation.letter_display.update()
+            else:
+                self.voice_animation.letter_display.value = "Say 'Letter X'"
+                self.voice_animation.letter_display.color = ft.Colors.ORANGE_600
+                self.voice_animation.letter_display.size = 28
+                self.voice_animation.letter_display.update()
+                
+        except sr.UnknownValueError:
+            self.voice_animation.letter_display.value = "Didn't understand"
+            self.voice_animation.letter_display.color = ft.Colors.GREY_600
+            self.voice_animation.letter_display.size = 24
+            self.voice_animation.letter_display.update()
+        except sr.RequestError:
+            self.voice_animation.letter_display.value = "Service Error"
+            self.voice_animation.letter_display.color = ft.Colors.RED_600
+            self.voice_animation.letter_display.size = 24
+            self.voice_animation.letter_display.update()
+    
+    def _finalize_voice_recording(self):
+        """Clean up after voice recording is complete"""
+        self.recording = False
         # Stop the recording animation but keep the detected letter displayed
         self.voice_animation.stop_recording_preserve_letter()
         self.active_view = None
     
-    def _stop_voice_recording(self, _):
-        """Stop recording and process the audio"""
-        try:
-            # Stop recording
-            self.recording = False
-            self.audio = self.recognizer.listen(self.source, timeout=1)
+    def _stop_voice_recording(self, e):
+        """Stop recording manually"""
+        if not self.recording:
+            return  # Not recording
             
-            try:
-                # Try to recognize the speech
-                text = self.recognizer.recognize_google(self.audio)
-                # Process the recognized text (single letter)
-                if len(text) >= 1:
-                    letter = text[0].lower()
-                    self.on_guess(letter)
-                else:
-                    self.show_notification("No speech detected. Please try again.")
-            except sr.UnknownValueError:
-                self.show_notification("Could not understand audio. Please try again.")
-            except sr.RequestError:
-                self.show_notification("Could not request results. Check your internet connection.")
-        except Exception as e:
-            self.show_notification(f"Error stopping voice recording: {e}")
+        print("===MEDIA_CONTROLS=== Manually stopping voice recording")
+        
+        # Set recording to False to signal the worker thread to stop
+        self.recording = False
+        
+        # Stop the animation and show stopped message
+        self.voice_animation.letter_display.value = "Recording Stopped"
+        self.voice_animation.letter_display.color = ft.Colors.ORANGE_600
+        self.voice_animation.letter_display.size = 28
+        self.voice_animation.letter_display.update()
+        
+        # Stop the recording animation
+        self.voice_animation.stop_recording_preserve_letter()
+        self.active_view = None
     
     def _start_hand_drawing(self, e):
         self._reset_all_views()
@@ -415,10 +452,13 @@ class MediaControls:
         """Handle prediction result from hand drawing recognition"""
         if confidence > 0.5:  # Only use prediction if confidence is reasonable
             self.on_guess(prediction)
-            self.show_notification(f"Recognized letter: {prediction} (Confidence: {confidence:.2f})")
     
     def _reset_all_views(self):
         """Reset all views before activating a new one"""
+        # Stop voice recording if active
+        if self.recording:
+            self.recording = False
+            
         self.voice_animation.stop_recording()
         self.hand_drawing.stop_camera()
         self.active_view = None
