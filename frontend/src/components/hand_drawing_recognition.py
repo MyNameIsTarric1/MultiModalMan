@@ -43,10 +43,10 @@ class HandDrawingRecognition(ft.Container):
         self.prediction_confidence = 0.0
         self.on_prediction_callback = on_prediction_callback
         
-        # Camera feed container
+        # Camera feed container - reduced size for horizontal layout
         self.camera_container = ft.Container(
-            width=420,
-            height=240,  # Camera height increased for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             border_radius=5,
             padding=0,
             margin=0,
@@ -57,16 +57,16 @@ class HandDrawingRecognition(ft.Container):
         # Camera image
         self.camera_image = ft.Image(
             fit=ft.ImageFit.COVER,
-            width=420,
-            height=240,  # Camera height increased for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             src_base64="",
             expand=False
         )
         
         # Canvas container
         self.canvas_container = ft.Container(
-            width=420,
-            height=240,  # Canvas height increased for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             border_radius=5,
             padding=0,
             margin=0,
@@ -77,16 +77,16 @@ class HandDrawingRecognition(ft.Container):
         # Canvas image
         self.canvas_image = ft.Image(
             fit=ft.ImageFit.COVER,
-            width=420,
-            height=240,  # Canvas height increased for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             src_base64="",
             expand=False
         )
         
         # Placeholder for camera
         self.camera_placeholder = ft.Container(
-            width=420,
-            height=240,  # Increased height for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             bgcolor=ft.Colors.BLACK,
             border_radius=5,
             alignment=ft.alignment.center,
@@ -100,8 +100,8 @@ class HandDrawingRecognition(ft.Container):
         
         # Placeholder for canvas
         self.canvas_placeholder = ft.Container(
-            width=420,
-            height=240,  # Increased height for better visibility
+            width=280,  # Reduced width for horizontal layout
+            height=200,  # Reduced height to fit better
             bgcolor=ft.Colors.BLACK,
             border_radius=5,
             alignment=ft.alignment.center,
@@ -121,28 +121,43 @@ class HandDrawingRecognition(ft.Container):
             weight="bold"
         )
         
-        # Prediction Text
+        # Prediction Text - for recognized letters
         self.prediction_text = ft.Text(
+            value="",  # Start empty
             color=config.COLOR_PALETTE["primary"],
-            size=18,
-            weight="bold"
+            size=24,  # Larger text for better visibility
+            weight="bold",
+            text_align=ft.TextAlign.CENTER
         )
         
-        # Layout
+        # Layout - horizontal arrangement
         self.content = ft.Column([
             self.status_label,
-            ft.Container(height=10),
-            # Camera section
-            ft.Container(height=5),
-            self.camera_placeholder,
+            ft.Container(height=15),
             
-            ft.Container(height=15),  # Spacer between camera and canvas
+            # Camera and Canvas side by side
+            ft.Row([
+                ft.Column([
+                    ft.Text("Camera", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                    ft.Container(height=5),
+                    self.camera_placeholder,
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                
+                ft.Container(width=20),  # Spacer between camera and canvas
+                
+                ft.Column([
+                    ft.Text("Canvas", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                    ft.Container(height=5),
+                    self.canvas_placeholder,
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            ], alignment=ft.MainAxisAlignment.CENTER),
             
-            # Canvas section
-            ft.Container(height=5),
-            self.canvas_placeholder,
+            ft.Container(height=15),  # Spacer before prediction
             
-            ft.Container(height=10),  # Spacer before prediction display
+            # Prediction display centered below
+            self.prediction_text,
+            
+            ft.Container(height=10),  # Spacer at bottom
             
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         
@@ -164,22 +179,34 @@ class HandDrawingRecognition(ft.Container):
             self.camera_container.content = self.camera_image
             self.canvas_container.content = self.canvas_image
             
-            # Update layout
+            # Update layout - horizontal arrangement with live feeds
             new_content = ft.Column([
                 self.status_label,
-                ft.Container(height=10),
+                ft.Container(height=15),
                 
-                # Camera section
-                ft.Container(height=5),
-                self.camera_container,
+                # Camera and Canvas side by side
+                ft.Row([
+                    ft.Column([
+                        ft.Text("Camera", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                        ft.Container(height=5),
+                        self.camera_container,
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                    
+                    ft.Container(width=20),  # Spacer between camera and canvas
+                    
+                    ft.Column([
+                        ft.Text("Canvas", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                        ft.Container(height=5),
+                        self.canvas_container,
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                ], alignment=ft.MainAxisAlignment.CENTER),
                 
-                ft.Container(height=15),  # Spacer between camera and canvas
+                ft.Container(height=15),  # Spacer before prediction
                 
-                # Canvas section
-                ft.Container(height=5),
-                self.canvas_container,
+                # Prediction display centered below
+                self.prediction_text,
                 
-                ft.Container(height=10),  # Spacer before prediction display
+                ft.Container(height=10),  # Spacer at bottom
                 
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             
@@ -216,22 +243,34 @@ class HandDrawingRecognition(ft.Container):
             self.video_capture.release()
             self.video_capture = None
         
-        # Update layout to show placeholders
+        # Update layout to show placeholders - horizontal arrangement
         new_content = ft.Column([
             self.status_label,
-            ft.Container(height=10),
+            ft.Container(height=15),
             
-            # Camera section
-            ft.Container(height=5),
-            self.camera_placeholder,
+            # Camera and Canvas side by side
+            ft.Row([
+                ft.Column([
+                    ft.Text("Camera", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                    ft.Container(height=5),
+                    self.camera_placeholder,
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                
+                ft.Container(width=20),  # Spacer between camera and canvas
+                
+                ft.Column([
+                    ft.Text("Canvas", size=14, weight="bold", text_align=ft.TextAlign.CENTER),
+                    ft.Container(height=5),
+                    self.canvas_placeholder,
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            ], alignment=ft.MainAxisAlignment.CENTER),
             
-            ft.Container(height=15),  # Spacer between camera and canvas
+            ft.Container(height=15),  # Spacer before prediction
             
-            # Canvas section
-            ft.Container(height=5),
-            self.canvas_placeholder,
+            # Prediction display centered below
+            self.prediction_text,
             
-            ft.Container(height=10),  # Spacer before prediction display
+            ft.Container(height=10),  # Spacer at bottom
             
         ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         
@@ -245,7 +284,7 @@ class HandDrawingRecognition(ft.Container):
             # Update the canvas image
             self._update_canvas_image()
             # Reset prediction
-            self.prediction_text.value = "Draw a letter and click 'Recognize'"
+            self.prediction_text.value = ""
             self.prediction_text.color = config.COLOR_PALETTE["primary"]
             self.last_prediction = None
             self.prediction_confidence = 0.0
@@ -259,7 +298,7 @@ class HandDrawingRecognition(ft.Container):
         if canvas is None or np.sum(canvas) == 0:
             self.prediction_text.value = "No drawing detected"
             self.prediction_text.color = config.COLOR_PALETTE["error"]
-            return
+            return None, 0.0
         
         try:
             # Convert the canvas to grayscale for prediction
@@ -348,23 +387,36 @@ class HandDrawingRecognition(ft.Container):
                             best_confidence = confidence
                             best_prediction = prediction
                     
-                    # Update prediction display
+                    # Update prediction display - show just the letter if confidence is good
                     self.last_prediction = best_prediction
                     self.prediction_confidence = best_confidence
                     
-                    confidence_color = config.COLOR_PALETTE["primary"] if best_confidence > 0.7 else config.COLOR_PALETTE["error"]
+                    if best_confidence > 0.5:
+                        # Show just the letter prominently
+                        self.prediction_text.value = best_prediction
+                        self.prediction_text.color = ft.Colors.GREEN_600
+                        self.prediction_text.size = 48  # Large letter display
+                    else:
+                        # Show with confidence if low confidence
+                        self.prediction_text.value = f"{best_prediction}?"
+                        self.prediction_text.color = ft.Colors.ORANGE_600
+                        self.prediction_text.size = 32
                     
-                    self.prediction_text.value = f"Prediction: {best_prediction} (Confidence: {best_confidence:.2f})"
-                    self.prediction_text.color = confidence_color
-                    
-                    # Call the callback function with the prediction
-                    if self.on_prediction_callback:
-                        self.on_prediction_callback(best_prediction, best_confidence)
+                    # Return the prediction for the callback
+                    return best_prediction, best_confidence
         
         except Exception as e:
             print(f"Error recognizing letter: {e}")
-            self.prediction_text.value = f"Error: {str(e)}"
+            self.prediction_text.value = "Error"
             self.prediction_text.color = config.COLOR_PALETTE["error"]
+            self.prediction_text.size = 24
+            return None, 0.0
+        
+        # Call the callback function with the prediction if we have one
+        if self.on_prediction_callback and self.last_prediction:
+            self.on_prediction_callback(self.last_prediction, self.prediction_confidence)
+            
+        return self.last_prediction, self.prediction_confidence
     
     def _camera_loop(self):
         """Camera capture loop running in a separate thread"""
